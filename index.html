@@ -1,151 +1,25 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<title>Orion</title>
-
-<style>
-body {
-  margin: 0;
-  font-family: Arial, sans-serif;
-  background: linear-gradient(180deg, #0f1220, #05060d);
-  color: #fff;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-}
-
-.app {
-  width: 100%;
-  max-width: 420px;
-  background: #14172e;
-  padding: 24px;
-  border-radius: 14px;
-  box-shadow: 0 20px 40px rgba(0,0,0,.4);
-}
-
-h1 {
-  margin: 0;
-  font-size: 26px;
-}
-
-.subtitle {
-  font-size: 14px;
-  opacity: .7;
-  margin-bottom: 20px;
-}
-
-button {
-  width: 100%;
-  padding: 14px;
-  border: none;
-  border-radius: 10px;
-  background: #5a6bff;
-  color: #fff;
-  font-size: 16px;
-  cursor: pointer;
-}
-
-button.stop {
-  background: #333;
-  margin-top: 8px;
-}
-
-#status {
-  margin: 12px 0;
-  font-size: 13px;
-  opacity: .8;
-}
-
-#output {
-  margin-top: 16px;
-  font-size: 14px;
-}
-
-#output p {
-  margin: 8px 0;
-}
-</style>
+  <meta charset="UTF-8">
+  <title>Orion</title>
+  <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
-<div class="app">
-  <h1>Orion</h1>
-  <p class="subtitle">Clareza antes da decisão.</p>
+  <div class="app">
+    <h1>Orion</h1>
+    <p class="subtitle">Clareza antes da decisão.</p>
 
-  <button id="start">Falar com Orion</button>
-  <button id="stop" class="stop">Parar</button>
+    <div class="controls">
+      <button id="mic-btn">Falar com Orion</button>
+      <button id="stop-btn">Parar</button>
+    </div>
 
-  <div id="status">Orion está atento.</div>
-  <div id="output"></div>
-</div>
+    <div id="status">Orion está despertando, em breve, clareza real.</div>
+    <div id="output"></div>
+  </div>
 
-<script>
-/* ===== VOZ ===== */
-function falar(texto) {
-  speechSynthesis.cancel();
-  const u = new SpeechSynthesisUtterance(texto);
-  u.lang = "pt-BR";
-  speechSynthesis.speak(u);
-}
-
-/* ===== MEMÓRIA ===== */
-let memoria = {
-  tristeza: 0
-};
-
-/* ===== LÓGICA ===== */
-function responder(texto) {
-  texto = texto.toLowerCase();
-
-  if (texto.includes("triste")) {
-    memoria.tristeza++;
-
-    if (memoria.tristeza === 1) {
-      return "Percebo tristeza. O que fez esse sentimento aparecer hoje?";
-    }
-
-    if (memoria.tristeza === 2) {
-      return "Você voltou a esse sentimento. Ele está mais intenso agora ou mais cansativo?";
-    }
-
-    return "Quando a tristeza insiste assim, ela deixa de ser um momento e vira um pedido de atenção. O que você tem evitado encarar?";
-  }
-
-  return "Estou com você. Fale no seu tempo.";
-}
-
-/* ===== RECONHECIMENTO ===== */
-const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-const rec = new Recognition();
-rec.lang = "pt-BR";
-rec.continuous = false;
-
-const output = document.getElementById("output");
-const status = document.getElementById("status");
-
-document.getElementById("start").onclick = () => {
-  status.innerText = "Orion está ouvindo...";
-  rec.start();
-};
-
-document.getElementById("stop").onclick = () => {
-  rec.stop();
-  speechSynthesis.cancel();
-  status.innerText = "Orion pausado.";
-};
-
-rec.onresult = e => {
-  const texto = e.results[0][0].transcript;
-  const resposta = responder(texto);
-
-  output.innerHTML += `<p><strong>Você:</strong> ${texto}</p>`;
-  output.innerHTML += `<p><strong>Orion:</strong> ${resposta}</p>`;
-
-  falar(resposta);
-  status.innerText = "Orion está refletindo com você.";
-};
-</script>
+  <script src="script.js"></script>
 </body>
 </html>
+
