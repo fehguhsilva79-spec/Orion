@@ -31,10 +31,8 @@ const MEM_KEY = "orion_memoria_v1";
 
 function carregarMemoria() {
   return JSON.parse(localStorage.getItem(MEM_KEY)) || {
-    cansaco: 0,
     tristeza: 0,
-    dinheiro: 0,
-    geral: 0
+    ultimoTema: null
   };
 }
 
@@ -43,66 +41,53 @@ function salvarMemoria(mem) {
 }
 
 // ==========================
-// DETECÇÃO DE TEMA
+// DETECÇÃO
 // ==========================
 function detectarTema(texto) {
   texto = texto.toLowerCase();
 
-  if (texto.includes("dinheiro") || texto.includes("conta") || texto.includes("falta"))
-    return "dinheiro";
-
-  if (texto.includes("triste") || texto.includes("desanimado"))
-    return "tristeza";
-
-  if (texto.includes("cansado") || texto.includes("esgotado"))
-    return "cansaco";
+  if (texto.includes("triste")) return "tristeza";
 
   return "geral";
 }
 
 // ==========================
-// GERADOR DE RESPOSTA EVOLUTIVA
+// RESPOSTA EVOLUTIVA
 // ==========================
 function responder(textoUsuario) {
   const tema = detectarTema(textoUsuario);
   const mem = carregarMemoria();
 
-  mem[tema]++;
-  salvarMemoria(mem);
-
   let resposta = "";
 
-  if (tema === "dinheiro") {
-    if (mem.dinheiro === 1) {
-      resposta = "A falta de dinheiro pesa mais do que números. Ela afeta segurança e dignidade. Quer me dizer o que mais te preocupa nisso agora?";
-    } else if (mem.dinheiro === 2) {
-      resposta = "Percebo que esse assunto está voltando. Isso indica pressão constante. O que hoje te dá mais medo nessa situação?";
-    } else {
-      resposta = "Isso já não parece um episódio isolado, mas uma fase. Antes de pensar em solução, precisamos entender onde está o maior aperto. É no presente ou no futuro?";
-    }
-  }
+  if (tema === "tristeza") {
+    mem.tristeza++;
 
-  else if (tema === "tristeza") {
     if (mem.tristeza === 1) {
-      resposta = "Tristeza costuma surgir quando algo importante está sendo sustentado sozinho. O que você tem carregado sem dividir?";
-    } else {
-      resposta = "Quando a tristeza insiste, ela pede atenção, não força. O que você sente que está faltando hoje?";
+      resposta = "Percebo tristeza na sua voz. Não precisa passar por isso sozinho. O que mais tem pesado hoje?";
     }
-  }
 
-  else if (tema === "cansaco") {
-    resposta = "Cansaço prolongado raramente é físico. Normalmente vem de esforço sem retorno. Onde você sente que está dando muito e recebendo pouco?";
+    else if (mem.tristeza === 2) {
+      resposta = "Você voltou a esse sentimento. Isso indica que ele não foi embora. Ele vem mais do passado ou do presente?";
+    }
+
+    else {
+      resposta = "Quando a tristeza insiste assim, ela deixa de ser um estado e vira um sinal. Antes de seguir, preciso te perguntar: você está tentando aguentar ou entender o que sente?";
+    }
   }
 
   else {
-    resposta = "Estou com você. Fale no seu ritmo. O que mais está ocupando sua mente agora?";
+    resposta = "Estou aqui. Fale no seu tempo. O que está mais vivo em você agora?";
   }
+
+  mem.ultimoTema = tema;
+  salvarMemoria(mem);
 
   return resposta;
 }
 
 // ==========================
-// RECONHECIMENTO DE VOZ
+// VOZ
 // ==========================
 const SpeechRecognition =
   window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -112,7 +97,6 @@ if (!SpeechRecognition) {
 } else {
   const recognition = new SpeechRecognition();
   recognition.lang = "pt-BR";
-  recognition.interimResults = false;
 
   micBtn.onclick = () => {
     status.innerText = "Orion está ouvindo...";
@@ -133,6 +117,6 @@ if (!SpeechRecognition) {
   };
 
   recognition.onerror = () => {
-    status.innerText = "Não consegui ouvir. Tente novamente.";
+    status.innerText = "Erro ao ouvir. Tente novamente.";
   };
 }
