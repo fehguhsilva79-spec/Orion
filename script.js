@@ -6,13 +6,10 @@ const status = document.getElementById("status");
 const output = document.getElementById("output");
 
 // ==========================
-// FUNÇÃO DE FALA (SAÍDA)
+// FUNÇÃO DE FALA
 // ==========================
 function falar(texto) {
-  if (!("speechSynthesis" in window)) {
-    alert("Seu navegador não suporta síntese de voz.");
-    return;
-  }
+  if (!("speechSynthesis" in window)) return;
 
   speechSynthesis.cancel();
 
@@ -30,69 +27,94 @@ function falar(texto) {
 }
 
 // ==========================
-// RESPOSTAS-BASE DO ORION
+// MEMÓRIA LEVE (LOCAL)
+// ==========================
+const memoriaKey = "orion_memoria";
+
+function carregarMemoria() {
+  const dados = localStorage.getItem(memoriaKey);
+  if (!dados) {
+    return {
+      confusao: 0,
+      cansaco: 0,
+      medo: 0,
+      pressao: 0,
+      indecisao: 0
+    };
+  }
+  return JSON.parse(dados);
+}
+
+function salvarMemoria(memoria) {
+  localStorage.setItem(memoriaKey, JSON.stringify(memoria));
+}
+
+// ==========================
+// RESPOSTAS BASE
 // ==========================
 const respostas = {
   confusao: [
-    "Entendi. Quando muitas coisas se misturam, a mente perde clareza.",
-    "Vamos separar isso com calma.",
-    "O que mais ocupa sua cabeça agora?"
+    "Quando muitas ideias se misturam, a mente perde nitidez.",
+    "Clareza não surge com pressa.",
+    "O que hoje mais te confunde?"
   ],
   cansaco: [
-    "Isso soa como alguém que está carregando mais do que deveria.",
-    "Antes de decidir qualquer coisa, vale entender esse peso.",
-    "O que hoje mais te drena energia?"
+    "O cansaço constante costuma ser um sinal ignorado por muito tempo.",
+    "Talvez não seja falta de força, mas excesso de peso.",
+    "O que mais te drena energia hoje?"
   ],
   medo: [
-    "Faz sentido sentir medo quando algo importa de verdade.",
-    "O medo costuma aparecer antes da clareza.",
-    "O que você acredita que pode perder nessa decisão?"
+    "O medo aparece quando algo importa de verdade.",
+    "Ele não significa fraqueza.",
+    "O que você teme perder nessa situação?"
   ],
   pressao: [
-    "Parece que existem expectativas ao redor te empurrando.",
-    "Quando a pressão vem de fora, a confusão aumenta por dentro.",
-    "Essa decisão é mais sua ou dos outros?"
+    "Expectativas externas costumam silenciar a própria voz.",
+    "Nem toda cobrança precisa ser atendida.",
+    "Essa decisão é sua ou dos outros?"
   ],
   indecisao: [
-    "Soa como um conflito interno, não como falta de opção.",
-    "Dois caminhos costumam disputar quando ambos têm custo.",
-    "O que cada escolha te exige agora?"
+    "Indecisão geralmente nasce de valores em conflito.",
+    "Não é falta de opção, é excesso de custo.",
+    "O que cada escolha exige de você agora?"
   ]
 };
 
 // ==========================
-// DETECÇÃO DE ESTADO MENTAL
+// DETECTAR ESTADO
 // ==========================
 function detectarEstado(texto) {
   texto = texto.toLowerCase();
 
-  if (texto.includes("não sei") || texto.includes("confuso") || texto.includes("perdido")) {
-    return "confusao";
-  }
-  if (texto.includes("cansado") || texto.includes("esgotado") || texto.includes("não aguento")) {
-    return "cansaco";
-  }
-  if (texto.includes("medo") || texto.includes("inseguro") || texto.includes("errado")) {
-    return "medo";
-  }
-  if (texto.includes("preciso") || texto.includes("esperam") || texto.includes("cobram")) {
-    return "pressao";
-  }
-  if (texto.includes("ou") || texto.includes("decidir") || texto.includes("escolher")) {
-    return "indecisao";
-  }
+  if (texto.includes("confuso") || texto.includes("perdido") || texto.includes("não sei")) return "confusao";
+  if (texto.includes("cansado") || texto.includes("esgotado") || texto.includes("triste")) return "cansaco";
+  if (texto.includes("medo") || texto.includes("inseguro")) return "medo";
+  if (texto.includes("pressão") || texto.includes("cobrança") || texto.includes("esperam")) return "pressao";
+  if (texto.includes("decidir") || texto.includes("escolher") || texto.includes("ou")) return "indecisao";
 
-  return "confusao"; // padrão
+  return "confusao";
 }
 
 // ==========================
-// GERAR RESPOSTA DO ORION
+// GERAR RESPOSTA COM MEMÓRIA
 // ==========================
 function gerarResposta(textoUsuario) {
   const estado = detectarEstado(textoUsuario);
-  const partes = respostas[estado];
+  const memoria = carregarMemoria();
 
-  return `${partes[0]}<br>${partes[1]}<br><br>${partes[2]}`;
+  memoria[estado]++;
+  salvarMemoria(memoria);
+
+  const respostasEstado = respostas[estado];
+  let resposta = `${respostasEstado[0]}<br>${respostasEstado[1]}`;
+
+  if (memoria[estado] >= 3) {
+    resposta += `<br><br>Percebo que esse tema tem aparecido com frequência.`;
+  }
+
+  resposta += `<br><br>${respostasEstado[2]}`;
+
+  return resposta;
 }
 
 // ==========================
@@ -102,7 +124,7 @@ const SpeechRecognition =
   window.SpeechRecognition || window.webkitSpeechRecognition;
 
 if (!SpeechRecognition) {
-  status.innerText = "Reconhecimento de voz não suportado neste navegador.";
+  status.innerText = "Reconhecimento de voz não suportado.";
 } else {
   const recognition = new SpeechRecognition();
   recognition.lang = "pt-BR";
@@ -122,7 +144,7 @@ if (!SpeechRecognition) {
     output.innerHTML += `<br><br><strong>Orion:</strong><br>${resposta}`;
 
     falar(resposta.replace(/<br>/g, " "));
-    status.innerText = "Clareza antes da decisão.";
+    status.innerText = "Orion está refletindo com você.";
   };
 
   recognition.onerror = () => {
