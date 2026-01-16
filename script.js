@@ -51,12 +51,24 @@ function salvarMemoria(memoria) {
 }
 
 // ==========================
-// RESPOSTAS BASE POR EMOÇÃO
+// RESPOSTAS BASE
 // ==========================
 const respostas = {
+  saudacao: [
+    "Olá! Estou com você. Fale no seu tempo.",
+    "Como está se sentindo hoje?",
+  ],
+  despedida: [
+    "Até logo! Lembre-se de cuidar de você.",
+    "Nos vemos em breve. Continue refletindo sobre seu dia.",
+  ],
+  neutro: [
+    "Interessante. Conte-me mais.",
+    "E como isso faz você se sentir?",
+  ],
   tristeza: [
     "Percebo tristeza. O que fez esse sentimento aparecer hoje?",
-    "Quando a tristeza insiste assim, ela deixa de ser um pedido de atenção.",
+    "Quando a tristeza insiste assim, ela deixa de ser um momento e vira um pedido de atenção.",
     "Você gostaria de refletir mais sobre isso?"
   ],
   ansiedade: [
@@ -74,7 +86,7 @@ const respostas = {
     "Ele não significa fraqueza.",
     "Quer me contar do que está receoso?"
   ],
-  cansaço: [
+  cansaco: [
     "O cansaço constante é um sinal de que precisa de atenção.",
     "Talvez seja hora de desacelerar um pouco.",
     "O que mais te drena energia hoje?"
@@ -85,38 +97,47 @@ const respostas = {
 // DETECTAR ESTADO
 // ==========================
 function detectarEstado(texto) {
-  texto = texto.toLowerCase();
+  texto = texto.toLowerCase().trim();
 
+  // Verifica saudações e despedidas
+  if (["olá", "oi", "bom dia", "boa tarde", "boa noite"].some(t => texto.includes(t))) return "saudacao";
+  if (["tchau", "até logo", "boa noite", "adeus"].some(t => texto.includes(t))) return "despedida";
+
+  // Emoções
   if (texto.includes("triste")) return "tristeza";
   if (texto.includes("ansioso") || texto.includes("ansiedade")) return "ansiedade";
   if (texto.includes("raiva") || texto.includes("irritado")) return "raiva";
   if (texto.includes("medo") || texto.includes("inseguro")) return "medo";
-  if (texto.includes("cansado") || texto.includes("esgotado")) return "cansaço";
+  if (texto.includes("cansado") || texto.includes("esgotado")) return "cansaco";
 
-  return "tristeza";
+  return "neutro";
 }
 
 // ==========================
-// GERAR RESPOSTA COM MEMÓRIA
+// GERAR RESPOSTA COM MEMÓRIA E EVITANDO REPETIÇÃO
 // ==========================
 function gerarResposta(textoUsuario) {
   const estado = detectarEstado(textoUsuario);
   const memoria = carregarMemoria();
 
+  // Inicializa contador se não existir
   if (!memoria[estado]) memoria[estado] = 0;
   memoria[estado]++;
   salvarMemoria(memoria);
 
   const respostasEstado = respostas[estado];
-  let resposta = respostasEstado[0];
+  let resposta = "";
 
-  // Se já apareceu mais de uma vez, adiciona reflexão extra
-  if (memoria[estado] >= 2) {
-    resposta += ` ${respostasEstado[1]}`;
+  // Seleciona resposta baseada na contagem para evitar repetição exata
+  if (memoria[estado] === 1) {
+    resposta = respostasEstado[0];
+  } else if (memoria[estado] === 2 && respostasEstado[1]) {
+    resposta = respostasEstado[1];
+  } else if (respostasEstado[2]) {
+    resposta = respostasEstado[2];
+  } else {
+    resposta = respostasEstado[0];
   }
-
-  // Sempre finaliza com pergunta para manter fluxo
-  resposta += ` ${respostasEstado[2]}`;
 
   return resposta;
 }
