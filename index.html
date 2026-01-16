@@ -1,23 +1,203 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Orion</title>
-  <link rel="stylesheet" href="style.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    body {
+      margin: 0;
+      background: radial-gradient(circle at top, #0b0f1a, #05070d);
+      color: #ffffff;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 420px;
+      height: 100%;
+      max-height: 720px;
+      display: flex;
+      flex-direction: column;
+      padding: 20px;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 10px;
+    }
+
+    .star {
+      width: 80px;
+      height: 80px;
+      margin: 0 auto 10px;
+      border-radius: 50%;
+      background: radial-gradient(circle, #ffffff, #7aa2ff, #1a2b6f);
+      box-shadow: 0 0 30px rgba(122,162,255,0.8);
+      animation: pulse 3s infinite;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.08); }
+      100% { transform: scale(1); }
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 22px;
+      font-weight: 500;
+      letter-spacing: 1px;
+    }
+
+    .chat {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.04);
+      margin-bottom: 10px;
+    }
+
+    .msg {
+      margin-bottom: 12px;
+      line-height: 1.4;
+    }
+
+    .user {
+      color: #9fd3ff;
+    }
+
+    .orion {
+      color: #ffffff;
+    }
+
+    .controls {
+      display: flex;
+      gap: 10px;
+    }
+
+    button {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      border-radius: 10px;
+      background: #1f2b6d;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  </style>
 </head>
+
 <body>
-
   <div class="app">
-    <h1>Orion</h1>
-    <p class="subtitle">Clareza antes da decisão.</p>
+    <div class="header">
+      <div class="star"></div>
+      <h1>Orion</h1>
+    </div>
 
-    <button id="mic-btn">🎤 Falar com Orion</button>
+    <div class="chat" id="chat"></div>
 
-    <div id="status">Orion em espera.</div>
-
-    <div id="output"></div>
+    <div class="controls">
+      <button id="startBtn">Falar</button>
+      <button id="stopBtn" disabled>Parar</button>
+    </div>
   </div>
 
-  <script src="script.js"></script>
+  <script>
+    const chat = document.getElementById("chat");
+    const startBtn = document.getElementById("startBtn");
+    const stopBtn = document.getElementById("stopBtn");
+
+    let recognition;
+    let recognizing = false;
+
+    if ("webkitSpeechRecognition" in window) {
+      recognition = new webkitSpeechRecognition();
+      recognition.lang = "pt-BR";
+      recognition.continuous = false;
+      recognition.interimResults = false;
+    } else {
+      alert("Seu navegador não suporta reconhecimento de voz.");
+    }
+
+    function addMessage(text, sender) {
+      const div = document.createElement("div");
+      div.className = `msg ${sender}`;
+      div.innerText = text;
+      chat.appendChild(div);
+      chat.scrollTop = chat.scrollHeight;
+    }
+
+    function speak(text) {
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = "pt-BR";
+      utterance.rate = 1;
+      utterance.pitch = 1;
+      speechSynthesis.speak(utterance);
+    }
+
+    function orionResponse(userText) {
+      let response = "Estou aqui com você.";
+
+      if (userText.includes("triste") || userText.includes("mal")) {
+        response = "Sinto isso. Você não está sozinho. Quer me contar o que está pesando agora?";
+      } else if (userText.includes("perdido")) {
+        response = "Sentir-se perdido também faz parte do caminho. Vamos organizar isso juntos.";
+      } else if (userText.includes("medo")) {
+        response = "O medo surge quando algo importa. Vamos atravessar isso no seu ritmo.";
+      } else {
+        response = "Estou ouvindo. Pode continuar.";
+      }
+
+      addMessage("Orion: " + response, "orion");
+      speak(response);
+    }
+
+    recognition.onresult = (event) => {
+      const text = event.results[0][0].transcript.toLowerCase();
+      addMessage("Você: " + text, "user");
+      orionResponse(text);
+    };
+
+    recognition.onend = () => {
+      recognizing = false;
+      startBtn.disabled = false;
+      stopBtn.disabled = true;
+    };
+
+    startBtn.onclick = () => {
+      if (!recognizing) {
+        recognition.start();
+        recognizing = true;
+        startBtn.disabled = true;
+        stopBtn.disabled = false;
+      }
+    };
+
+    stopBtn.onclick = () => {
+      if (recognizing) {
+        recognition.stop();
+        recognizing = false;
+        startBtn.disabled = false;
+        stopBtn.disabled = true;
+      }
+    };
+  </script>
 </body>
 </html>
