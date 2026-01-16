@@ -1,28 +1,40 @@
-const button = document.getElementById("mic-btn");
-const statusEl = document.getElementById("status");
-const output = document.getElementById("output");
+async function enviar() {
+  const input = document.getElementById("userInput");
+  const texto = input.value.trim();
 
-async function sendToOrion(text) {
-  statusEl.textContent = "Orion está pensando...";
+  if (!texto) return;
+
+  adicionarMensagem("Você", texto);
+  input.value = "";
+
+  adicionarMensagem("Orion", "Orion está ouvindo...");
+
+  const respostasOrion = document.querySelectorAll(".orion");
+  const ultimaResposta = respostasOrion[respostasOrion.length - 1];
 
   try {
     const response = await fetch("/api/orion", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message: text })
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ message: texto })
     });
 
     const data = await response.json();
-    output.textContent = data.reply;
-    statusEl.textContent = "Orion está ouvindo";
-  } catch (err) {
-    output.textContent = "Erro de conexão com o Orion.";
-    statusEl.textContent = "Erro";
-    console.error(err);
+    ultimaResposta.innerText = "Orion: " + data.reply;
+  } catch (erro) {
+    ultimaResposta.innerText = "Orion: Houve um erro ao responder.";
   }
 }
 
-button.addEventListener("click", () => {
-  const userText = prompt("Digite algo para o Orion:");
-  if (userText) sendToOrion(userText);
-});
+function adicionarMensagem(autor, texto) {
+  const container = document.getElementById("response");
+
+  const mensagem = document.createElement("div");
+  mensagem.className = autor === "Orion" ? "orion" : "usuario";
+  mensagem.innerText = `${autor}: ${texto}`;
+
+  container.appendChild(mensagem);
+  container.scrollTop = container.scrollHeight;
+}
