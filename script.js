@@ -1,151 +1,104 @@
-// ==================================================
-// ORION v1.0 — Núcleo Cognitivo Local
-// Compatível com GitHub Pages e Vercel
-// ==================================================
-
 // ==========================
-// ELEMENTOS DA INTERFACE
+// ELEMENTOS
 // ==========================
 const micBtn = document.getElementById("mic-btn");
 const status = document.getElementById("status");
 const output = document.getElementById("output");
 
 // ==========================
-// CONFIGURAÇÕES GERAIS
-// ==========================
-const memoriaKey = "orion_memoria_v1";
-const faseKey = "orion_fase_v1";
-
-// ==========================
-// FUNÇÃO DE FALA
+// VOZ
 // ==========================
 function falar(texto) {
   if (!("speechSynthesis" in window)) return;
 
   speechSynthesis.cancel();
-
-  const utterance = new SpeechSynthesisUtterance(texto);
-  utterance.lang = "pt-BR";
-  utterance.rate = 0.95;
-  utterance.pitch = 1;
-  utterance.volume = 1;
+  const msg = new SpeechSynthesisUtterance(texto);
+  msg.lang = "pt-BR";
+  msg.rate = 1;
+  msg.pitch = 1;
 
   const voices = speechSynthesis.getVoices();
-  const vozBR = voices.find(v => v.lang.includes("pt"));
-  if (vozBR) utterance.voice = vozBR;
+  const vozBR = voices.find(v => v.lang === "pt-BR");
+  if (vozBR) msg.voice = vozBR;
 
-  speechSynthesis.speak(utterance);
+  speechSynthesis.speak(msg);
 }
 
 // ==========================
-// MEMÓRIA LOCAL
+// MEMÓRIA
 // ==========================
+const MEM_KEY = "orion_memoria_v1";
+
 function carregarMemoria() {
-  const dados = localStorage.getItem(memoriaKey);
-  if (!dados) {
-    return {
-      tristeza: 0,
-      cansaco: 0,
-      confusao: 0,
-      medo: 0,
-      pressao: 0
-    };
-  }
-  return JSON.parse(dados);
+  return JSON.parse(localStorage.getItem(MEM_KEY)) || {
+    cansaco: 0,
+    tristeza: 0,
+    dinheiro: 0,
+    geral: 0
+  };
 }
 
-function salvarMemoria(memoria) {
-  localStorage.setItem(memoriaKey, JSON.stringify(memoria));
-}
-
-function carregarFase() {
-  return localStorage.getItem(faseKey) || "acolhimento";
-}
-
-function salvarFase(fase) {
-  localStorage.setItem(faseKey, fase);
+function salvarMemoria(mem) {
+  localStorage.setItem(MEM_KEY, JSON.stringify(mem));
 }
 
 // ==========================
-// DETECÇÃO EMOCIONAL
+// DETECÇÃO DE TEMA
 // ==========================
-function detectarEstado(texto) {
+function detectarTema(texto) {
   texto = texto.toLowerCase();
 
-  if (texto.includes("triste") || texto.includes("vazio")) return "tristeza";
-  if (texto.includes("cansado") || texto.includes("esgotado")) return "cansaco";
-  if (texto.includes("confuso") || texto.includes("perdido")) return "confusao";
-  if (texto.includes("medo") || texto.includes("inseguro")) return "medo";
-  if (texto.includes("pressão") || texto.includes("cobrança")) return "pressao";
+  if (texto.includes("dinheiro") || texto.includes("conta") || texto.includes("falta"))
+    return "dinheiro";
 
-  return "confusao";
+  if (texto.includes("triste") || texto.includes("desanimado"))
+    return "tristeza";
+
+  if (texto.includes("cansado") || texto.includes("esgotado"))
+    return "cansaco";
+
+  return "geral";
 }
 
 // ==========================
-// GERADOR DE RESPOSTAS
+// GERADOR DE RESPOSTA EVOLUTIVA
 // ==========================
-function gerarResposta(textoUsuario) {
-  const estado = detectarEstado(textoUsuario);
-  const memoria = carregarMemoria();
-  let fase = carregarFase();
+function responder(textoUsuario) {
+  const tema = detectarTema(textoUsuario);
+  const mem = carregarMemoria();
 
-  memoria[estado]++;
-  salvarMemoria(memoria);
+  mem[tema]++;
+  salvarMemoria(mem);
 
-  // Progressão de fase
-  if (memoria[estado] >= 2 && fase === "acolhimento") {
-    fase = "reflexao";
-  }
-
-  if (memoria[estado] >= 4 && fase === "reflexao") {
-    fase = "consciencia";
-  }
-
-  if (memoria[estado] >= 6 && fase === "consciencia") {
-    fase = "direcionamento";
-  }
-
-  salvarFase(fase);
-
-  // ==========================
-  // RESPOSTAS POR FASE
-  // ==========================
   let resposta = "";
 
-  if (fase === "acolhimento") {
-    resposta = `
-      Estou aqui com você.
-      Nem tudo precisa ser resolvido agora.
-      Quer me dizer um pouco mais sobre isso?
-    `;
+  if (tema === "dinheiro") {
+    if (mem.dinheiro === 1) {
+      resposta = "A falta de dinheiro pesa mais do que números. Ela afeta segurança e dignidade. Quer me dizer o que mais te preocupa nisso agora?";
+    } else if (mem.dinheiro === 2) {
+      resposta = "Percebo que esse assunto está voltando. Isso indica pressão constante. O que hoje te dá mais medo nessa situação?";
+    } else {
+      resposta = "Isso já não parece um episódio isolado, mas uma fase. Antes de pensar em solução, precisamos entender onde está o maior aperto. É no presente ou no futuro?";
+    }
   }
 
-  if (fase === "reflexao") {
-    resposta = `
-      Percebo que isso tem se repetido.
-      Às vezes, não é o problema que pesa, mas o tempo que ele permanece.
-      O que mais te afeta nessa situação?
-    `;
+  else if (tema === "tristeza") {
+    if (mem.tristeza === 1) {
+      resposta = "Tristeza costuma surgir quando algo importante está sendo sustentado sozinho. O que você tem carregado sem dividir?";
+    } else {
+      resposta = "Quando a tristeza insiste, ela pede atenção, não força. O que você sente que está faltando hoje?";
+    }
   }
 
-  if (fase === "consciencia") {
-    resposta = `
-      Isso já não parece um momento isolado.
-      Parece uma fase.
-      O que você tem evitado encarar enquanto isso se repete?
-    `;
+  else if (tema === "cansaco") {
+    resposta = "Cansaço prolongado raramente é físico. Normalmente vem de esforço sem retorno. Onde você sente que está dando muito e recebendo pouco?";
   }
 
-  if (fase === "direcionamento") {
-    resposta = `
-      Ficar parado também é uma escolha, mesmo quando dói.
-      Não te direi o que fazer.
-      Mas te pergunto:
-      o que mudaria se você cuidasse disso de forma diferente?
-    `;
+  else {
+    resposta = "Estou com você. Fale no seu ritmo. O que mais está ocupando sua mente agora?";
   }
 
-  return resposta.trim();
+  return resposta;
 }
 
 // ==========================
@@ -155,32 +108,31 @@ const SpeechRecognition =
   window.SpeechRecognition || window.webkitSpeechRecognition;
 
 if (!SpeechRecognition) {
-  status.innerText = "Reconhecimento de voz não suportado neste navegador.";
+  status.innerText = "Reconhecimento de voz não suportado.";
 } else {
   const recognition = new SpeechRecognition();
   recognition.lang = "pt-BR";
   recognition.interimResults = false;
-  recognition.continuous = false;
 
-  micBtn.addEventListener("click", () => {
+  micBtn.onclick = () => {
     status.innerText = "Orion está ouvindo...";
     recognition.start();
-  });
+  };
 
   recognition.onresult = (event) => {
     const texto = event.results[0][0].transcript;
 
-    output.innerHTML = `<strong>Você:</strong> ${texto}`;
+    output.innerHTML += `<p><strong>Você:</strong> ${texto}</p>`;
 
-    const resposta = gerarResposta(texto);
+    const resposta = responder(texto);
 
-    output.innerHTML += `<br><br><strong>Orion:</strong><br>${resposta.replace(/\n/g, "<br>")}`;
-
+    output.innerHTML += `<p><strong>Orion:</strong> ${resposta}</p>`;
     falar(resposta);
-    status.innerText = "Orion está refletindo com você.";
+
+    status.innerText = "Orion está com você.";
   };
 
   recognition.onerror = () => {
-    status.innerText = "Erro ao ouvir. Tente novamente.";
+    status.innerText = "Não consegui ouvir. Tente novamente.";
   };
 }
