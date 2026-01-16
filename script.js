@@ -1,12 +1,13 @@
 // ==========================
-// ELEMENTOS
+// ELEMENTOS DA INTERFACE
 // ==========================
 const micBtn = document.getElementById("mic-btn");
+const stopBtn = document.getElementById("stop-btn");
 const status = document.getElementById("status");
 const output = document.getElementById("output");
 
 // ==========================
-// FALA (TTS)
+// FUNÇÃO DE FALA
 // ==========================
 function falar(texto) {
   if (!("speechSynthesis" in window)) return;
@@ -27,23 +28,21 @@ function falar(texto) {
 }
 
 // ==========================
-// MEMÓRIA GLOBAL
+// FUNÇÃO PARAR FALA
 // ==========================
-const memoriaKey = "orion_estado_vital";
+stopBtn.addEventListener("click", () => {
+  speechSynthesis.cancel();
+  status.innerText = "Orion parou de falar.";
+});
+
+// ==========================
+// MEMÓRIA LEVE (LOCAL)
+// ==========================
+const memoriaKey = "orion_memoria";
 
 function carregarMemoria() {
   const dados = localStorage.getItem(memoriaKey);
-  if (!dados) {
-    return {
-      tristeza: 0,
-      cansaco: 0,
-      medo: 0,
-      confusao: 0,
-      pressao: 0,
-      ultimoEstado: null,
-      repeticoes: 0
-    };
-  }
+  if (!dados) return {};
   return JSON.parse(dados);
 }
 
@@ -52,80 +51,74 @@ function salvarMemoria(memoria) {
 }
 
 // ==========================
-// DETECÇÃO EMOCIONAL
+// RESPOSTAS BASE POR EMOÇÃO
+// ==========================
+const respostas = {
+  tristeza: [
+    "Percebo tristeza. O que fez esse sentimento aparecer hoje?",
+    "Quando a tristeza insiste assim, ela deixa de ser um pedido de atenção.",
+    "Você gostaria de refletir mais sobre isso?"
+  ],
+  ansiedade: [
+    "A ansiedade pode sinalizar sobrecarga.",
+    "Respire fundo e tente identificar a causa.",
+    "Quer me contar o que está te tirando do eixo?"
+  ],
+  raiva: [
+    "Sinto raiva em você. O que te deixou assim?",
+    "Às vezes, expressar ajuda a clarear a mente.",
+    "Como você quer lidar com isso agora?"
+  ],
+  medo: [
+    "O medo aparece quando algo importa de verdade.",
+    "Ele não significa fraqueza.",
+    "Quer me contar do que está receoso?"
+  ],
+  cansaço: [
+    "O cansaço constante é um sinal de que precisa de atenção.",
+    "Talvez seja hora de desacelerar um pouco.",
+    "O que mais te drena energia hoje?"
+  ]
+};
+
+// ==========================
+// DETECTAR ESTADO
 // ==========================
 function detectarEstado(texto) {
   texto = texto.toLowerCase();
 
-  if (texto.includes("triste") || texto.includes("desanimado")) return "tristeza";
-  if (texto.includes("cansado") || texto.includes("esgotado")) return "cansaco";
+  if (texto.includes("triste")) return "tristeza";
+  if (texto.includes("ansioso") || texto.includes("ansiedade")) return "ansiedade";
+  if (texto.includes("raiva") || texto.includes("irritado")) return "raiva";
   if (texto.includes("medo") || texto.includes("inseguro")) return "medo";
-  if (texto.includes("pressionado") || texto.includes("cobrança")) return "pressao";
-  if (texto.includes("confuso") || texto.includes("perdido") || texto.includes("não sei")) return "confusao";
+  if (texto.includes("cansado") || texto.includes("esgotado")) return "cansaço";
 
-  return "neutro";
+  return "tristeza";
 }
 
 // ==========================
-// GERADOR DE CONDUÇÃO
+// GERAR RESPOSTA COM MEMÓRIA
 // ==========================
 function gerarResposta(textoUsuario) {
+  const estado = detectarEstado(textoUsuario);
   const memoria = carregarMemoria();
-  const estadoAtual = detectarEstado(textoUsuario);
 
-  if (estadoAtual === memoria.ultimoEstado) {
-    memoria.repeticoes++;
-  } else {
-    memoria.repeticoes = 0;
-  }
-
-  memoria.ultimoEstado = estadoAtual;
-  if (memoria[estadoAtual] !== undefined) memoria[estadoAtual]++;
+  if (!memoria[estado]) memoria[estado] = 0;
+  memoria[estado]++;
   salvarMemoria(memoria);
 
-  // ==========================
-  // LÓGICA DE RESPOSTA
-  // ==========================
-  if (estadoAtual === "tristeza") {
-    if (memoria.repeticoes === 0) {
-      return "Percebo tristeza. O que fez esse sentimento aparecer hoje?";
-    }
-    if (memoria.repeticoes === 1) {
-      return "Você voltou a esse sentimento. Ele está mais intenso agora ou mais cansativo?";
-    }
-    return "Quando a tristeza insiste assim, ela deixa de ser um momento e vira um pedido de atenção. O que você tem evitado encarar?";
+  const respostasEstado = respostas[estado];
+  let resposta = respostasEstado[0];
+
+  // Se já apareceu mais de uma vez, adiciona reflexão extra
+  if (memoria[estado] >= 2) {
+    resposta += ` ${respostasEstado[1]}`;
   }
 
-  if (estadoAtual === "cansaco") {
-    if (memoria.repeticoes === 0) {
-      return "Esse cansaço parece mais mental do que físico. O que tem ocupado sua cabeça ultimamente?";
-    }
-    return "Talvez você não precise de mais força, mas de menos peso. O que hoje você carregaria com prazer se pudesse largar o resto?";
-  }
+  // Sempre finaliza com pergunta para manter fluxo
+  resposta += ` ${respostasEstado[2]}`;
 
-  if (estadoAtual === "medo") {
-    if (memoria.repeticoes === 0) {
-      return "O medo costuma surgir quando algo importa de verdade. Do que exatamente você está tentando se proteger?";
-    }
-    return "Evitar o medo costuma custar mais energia do que enfrentá-lo aos poucos. Qual seria um primeiro passo seguro?";
-  }
-
-  if (estadoAtual === "pressao") {
-    if (memoria.repeticoes === 0) {
-      return "Nem toda expectativa externa merece prioridade. De quem é essa cobrança que você sente agora?";
-    }
-    return "Quando tudo parece urgente, algo essencial costuma ser ignorado. O que é realmente inadiável para você hoje?";
-  }
-
-  if (estadoAtual === "confusao") {
-    if (memoria.repeticoes === 0) {
-      return "Confusão geralmente não é falta de opção, é excesso de caminhos. O que você sente que precisa decidir primeiro?";
-    }
-    return "Antes de decidir, talvez seja mais importante entender o que você não quer mais sustentar.";
-  }
-
-  // NEUTRO
-  return "Estou com você. Fale no seu tempo.";
+  return resposta;
 }
 
 // ==========================
@@ -149,17 +142,16 @@ if (!SpeechRecognition) {
 
   recognition.onresult = (event) => {
     const texto = event.results[0][0].transcript;
-
-    output.innerHTML += `<div><strong>Você:</strong> ${texto}</div>`;
+    output.innerHTML += `<strong>Você:</strong> ${texto}<br>`;
 
     const resposta = gerarResposta(texto);
-    output.innerHTML += `<div><strong>Orion:</strong> ${resposta}</div>`;
+    output.innerHTML += `<strong>Orion:</strong> ${resposta}<br><br>`;
 
     falar(resposta);
-    status.innerText = "Orion está com você.";
+    status.innerText = "Orion está refletindo com você.";
   };
 
   recognition.onerror = () => {
-    status.innerText = "Não consegui ouvir. Tente novamente.";
+    status.innerText = "Erro ao ouvir. Tente novamente.";
   };
 }
