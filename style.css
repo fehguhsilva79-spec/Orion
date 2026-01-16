@@ -44,3 +44,20 @@ button:hover {
   border-radius: 8px;
   min-height: 50px;
 }
+
+#response {
+  margin-top: 20px;
+  max-height: 300px;
+  overflow-y: auto;
+  text-align: left;
+}
+
+.usuario {
+  margin-bottom: 10px;
+  color: #333;
+}
+
+.orion {
+  margin-bottom: 10px;
+  color: #1a73e8;
+}
