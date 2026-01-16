@@ -90,13 +90,13 @@ function detectarEstado(texto) {
   if (texto.includes("cansado") || texto.includes("esgotado") || texto.includes("triste")) return "cansaco";
   if (texto.includes("medo") || texto.includes("inseguro")) return "medo";
   if (texto.includes("pressão") || texto.includes("cobrança") || texto.includes("esperam")) return "pressao";
-  if (texto.includes("decidir") || texto.includes("escolher") || texto.includes("ou")) return "indecisao";
+  if (texto.includes("decidir") || texto.includes("escolher") || texto.includes(" ou ")) return "indecisao";
 
   return "confusao";
 }
 
 // ==========================
-// GERAR RESPOSTA COM MEMÓRIA
+// GERAR RESPOSTA COM CONTEXTO
 // ==========================
 function gerarResposta(textoUsuario) {
   const estado = detectarEstado(textoUsuario);
@@ -106,10 +106,22 @@ function gerarResposta(textoUsuario) {
   salvarMemoria(memoria);
 
   const respostasEstado = respostas[estado];
+
   let resposta = `${respostasEstado[0]}<br>${respostasEstado[1]}`;
+
+  const totalInteracoes =
+    memoria.confusao +
+    memoria.cansaco +
+    memoria.medo +
+    memoria.pressao +
+    memoria.indecisao;
 
   if (memoria[estado] >= 3) {
     resposta += `<br><br>Percebo que esse tema tem aparecido com frequência.`;
+  }
+
+  if (memoria[estado] >= 5 && totalInteracoes >= 6) {
+    resposta += `<br><br>Isso já não parece um momento isolado, mas uma fase.`;
   }
 
   resposta += `<br><br>${respostasEstado[2]}`;
@@ -138,9 +150,11 @@ if (!SpeechRecognition) {
 
   recognition.onresult = (event) => {
     const texto = event.results[0][0].transcript;
+
     output.innerHTML = `<strong>Você:</strong> ${texto}`;
 
     const resposta = gerarResposta(texto);
+
     output.innerHTML += `<br><br><strong>Orion:</strong><br>${resposta}`;
 
     falar(resposta.replace(/<br>/g, " "));
