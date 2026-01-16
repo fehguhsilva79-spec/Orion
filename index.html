@@ -1,203 +1,84 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <title>Orion</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-  <style>
-    * {
-      box-sizing: border-box;
-      font-family: Arial, Helvetica, sans-serif;
-    }
-
-    body {
-      margin: 0;
-      background: radial-gradient(circle at top, #0b0f1a, #05070d);
-      color: #ffffff;
-      height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .app {
-      width: 100%;
-      max-width: 420px;
-      height: 100%;
-      max-height: 720px;
-      display: flex;
-      flex-direction: column;
-      padding: 20px;
-    }
-
-    .header {
-      text-align: center;
-      margin-bottom: 10px;
-    }
-
-    .star {
-      width: 80px;
-      height: 80px;
-      margin: 0 auto 10px;
-      border-radius: 50%;
-      background: radial-gradient(circle, #ffffff, #7aa2ff, #1a2b6f);
-      box-shadow: 0 0 30px rgba(122,162,255,0.8);
-      animation: pulse 3s infinite;
-    }
-
-    @keyframes pulse {
-      0% { transform: scale(1); }
-      50% { transform: scale(1.08); }
-      100% { transform: scale(1); }
-    }
-
-    h1 {
-      margin: 0;
-      font-size: 22px;
-      font-weight: 500;
-      letter-spacing: 1px;
-    }
-
-    .chat {
-      flex: 1;
-      overflow-y: auto;
-      padding: 10px;
-      border-radius: 12px;
-      background: rgba(255,255,255,0.04);
-      margin-bottom: 10px;
-    }
-
-    .msg {
-      margin-bottom: 12px;
-      line-height: 1.4;
-    }
-
-    .user {
-      color: #9fd3ff;
-    }
-
-    .orion {
-      color: #ffffff;
-    }
-
-    .controls {
-      display: flex;
-      gap: 10px;
-    }
-
-    button {
-      flex: 1;
-      padding: 12px;
-      border: none;
-      border-radius: 10px;
-      background: #1f2b6d;
-      color: white;
-      font-size: 16px;
-      cursor: pointer;
-    }
-
-    button:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-  </style>
+<meta charset="UTF-8">
+<title>Orion</title>
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background: #0f1220;
+  color: #fff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+.app {
+  width: 100%;
+  max-width: 400px;
+  background: #181c36;
+  padding: 20px;
+  border-radius: 10px;
+}
+button {
+  width: 100%;
+  padding: 12px;
+  margin-top: 10px;
+}
+#output p {
+  margin: 8px 0;
+}
+</style>
 </head>
 
 <body>
-  <div class="app">
-    <div class="header">
-      <div class="star"></div>
-      <h1>Orion</h1>
-    </div>
+<div class="app">
+  <h2>Orion</h2>
+  <p>Clareza antes da decisão.</p>
+  <button id="mic">Falar com Orion</button>
+  <div id="output"></div>
+</div>
 
-    <div class="chat" id="chat"></div>
+<script>
+let tristeza = 0;
 
-    <div class="controls">
-      <button id="startBtn">Falar</button>
-      <button id="stopBtn" disabled>Parar</button>
-    </div>
-  </div>
+function falar(txt) {
+  const u = new SpeechSynthesisUtterance(txt);
+  u.lang = "pt-BR";
+  speechSynthesis.cancel();
+  speechSynthesis.speak(u);
+}
 
-  <script>
-    const chat = document.getElementById("chat");
-    const startBtn = document.getElementById("startBtn");
-    const stopBtn = document.getElementById("stopBtn");
+function responder(texto) {
+  texto = texto.toLowerCase();
 
-    let recognition;
-    let recognizing = false;
+  if (texto.includes("triste")) {
+    tristeza++;
 
-    if ("webkitSpeechRecognition" in window) {
-      recognition = new webkitSpeechRecognition();
-      recognition.lang = "pt-BR";
-      recognition.continuous = false;
-      recognition.interimResults = false;
-    } else {
-      alert("Seu navegador não suporta reconhecimento de voz.");
-    }
+    if (tristeza === 1)
+      return "Percebo tristeza. O que começou isso hoje?";
+    if (tristeza === 2)
+      return "Você voltou a esse sentimento. Ele está mais pesado agora?";
+    return "Quando a tristeza insiste assim, ela quer ser entendida, não ignorada. O que você vem evitando sentir?";
+  }
 
-    function addMessage(text, sender) {
-      const div = document.createElement("div");
-      div.className = `msg ${sender}`;
-      div.innerText = text;
-      chat.appendChild(div);
-      chat.scrollTop = chat.scrollHeight;
-    }
+  return "Estou aqui. Pode falar.";
+}
 
-    function speak(text) {
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = "pt-BR";
-      utterance.rate = 1;
-      utterance.pitch = 1;
-      speechSynthesis.speak(utterance);
-    }
+const rec = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+rec.lang = "pt-BR";
 
-    function orionResponse(userText) {
-      let response = "Estou aqui com você.";
+document.getElementById("mic").onclick = () => rec.start();
 
-      if (userText.includes("triste") || userText.includes("mal")) {
-        response = "Sinto isso. Você não está sozinho. Quer me contar o que está pesando agora?";
-      } else if (userText.includes("perdido")) {
-        response = "Sentir-se perdido também faz parte do caminho. Vamos organizar isso juntos.";
-      } else if (userText.includes("medo")) {
-        response = "O medo surge quando algo importa. Vamos atravessar isso no seu ritmo.";
-      } else {
-        response = "Estou ouvindo. Pode continuar.";
-      }
+rec.onresult = e => {
+  const texto = e.results[0][0].transcript;
+  const resp = responder(texto);
 
-      addMessage("Orion: " + response, "orion");
-      speak(response);
-    }
+  document.getElementById("output").innerHTML +=
+    `<p><b>Você:</b> ${texto}</p><p><b>Orion:</b> ${resp}</p>`;
 
-    recognition.onresult = (event) => {
-      const text = event.results[0][0].transcript.toLowerCase();
-      addMessage("Você: " + text, "user");
-      orionResponse(text);
-    };
-
-    recognition.onend = () => {
-      recognizing = false;
-      startBtn.disabled = false;
-      stopBtn.disabled = true;
-    };
-
-    startBtn.onclick = () => {
-      if (!recognizing) {
-        recognition.start();
-        recognizing = true;
-        startBtn.disabled = true;
-        stopBtn.disabled = false;
-      }
-    };
-
-    stopBtn.onclick = () => {
-      if (recognizing) {
-        recognition.stop();
-        recognizing = false;
-        startBtn.disabled = false;
-        stopBtn.disabled = true;
-      }
-    };
-  </script>
+  falar(resp);
+};
+</script>
 </body>
 </html>
