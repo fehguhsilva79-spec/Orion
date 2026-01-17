@@ -36,7 +36,7 @@ stopBtn.addEventListener("click", () => {
 });
 
 // ==========================
-// MEMÓRIA LEVE (LOCAL)
+// MEMÓRIA LEVE
 // ==========================
 const memoriaKey = "orion_memoria";
 
@@ -56,87 +56,113 @@ function salvarMemoria(memoria) {
 const respostas = {
   saudacao: [
     "Olá! Estou com você. Fale no seu tempo.",
-    "Como está se sentindo hoje?",
+    "Sempre pronto para ouvir o que importa pra você."
   ],
-  despedida: [
-    "Até logo! Lembre-se de cuidar de você.",
-    "Nos vemos em breve. Continue refletindo sobre seu dia.",
+  desabafo: [
+    "Entendo. Quer me contar mais sobre isso?",
+    "O que mais tem te incomodado nesse assunto?"
   ],
-  neutro: [
-    "Interessante. Conte-me mais.",
-    "E como isso faz você se sentir?",
+  pedidoAjuda: [
+    "Vamos pensar juntos sobre isso.",
+    "Como você imagina uma saída para essa situação?"
   ],
-  tristeza: [
-    "Percebo tristeza. O que fez esse sentimento aparecer hoje?",
-    "Quando a tristeza insiste assim, ela deixa de ser um momento e vira um pedido de atenção.",
-    "Você gostaria de refletir mais sobre isso?"
+  reflexao: [
+    "Interessante. O que essa situação te faz sentir?",
+    "Vamos analisar juntos o que isso significa para você."
   ],
-  ansiedade: [
-    "A ansiedade pode sinalizar sobrecarga.",
-    "Respire fundo e tente identificar a causa.",
-    "Quer me contar o que está te tirando do eixo?"
+  casual: [
+    "Continuo aqui, posso ouvir você.",
+    "Fale o que quiser, sem pressa."
   ],
-  raiva: [
-    "Sinto raiva em você. O que te deixou assim?",
-    "Às vezes, expressar ajuda a clarear a mente.",
-    "Como você quer lidar com isso agora?"
-  ],
-  medo: [
-    "O medo aparece quando algo importa de verdade.",
-    "Ele não significa fraqueza.",
-    "Quer me contar do que está receoso?"
-  ],
-  cansaco: [
-    "O cansaço constante é um sinal de que precisa de atenção.",
-    "Talvez seja hora de desacelerar um pouco.",
-    "O que mais te drena energia hoje?"
+  default: [
+    "Percebo o que você disse. Quer explorar isso comigo?",
+    "Me conte mais para que eu compreenda melhor."
   ]
 };
 
 // ==========================
-// DETECTAR ESTADO
+// DETECTAR INTENÇÃO
 // ==========================
-function detectarEstado(texto) {
-  texto = texto.toLowerCase().trim();
+function detectarIntencao(texto) {
+  texto = texto.toLowerCase();
 
-  // Verifica saudações e despedidas
-  if (["olá", "oi", "bom dia", "boa tarde", "boa noite"].some(t => texto.includes(t))) return "saudacao";
-  if (["tchau", "até logo", "boa noite", "adeus"].some(t => texto.includes(t))) return "despedida";
+  if (/(olá|oi|bom dia|boa tarde|boa noite)/.test(texto)) return "saudacao";
+  if (/(preciso de ajuda|me ajude|não sei o que fazer)/.test(texto)) return "pedidoAjuda";
+  if (/(estou triste|estou cansado|ansioso|me sinto|medo)/.test(texto)) return "desabafo";
+  if (/(penso|refletindo|me questiono)/.test(texto)) return "reflexao";
+  return "casual";
+}
 
-  // Emoções
-  if (texto.includes("triste")) return "tristeza";
-  if (texto.includes("ansioso") || texto.includes("ansiedade")) return "ansiedade";
-  if (texto.includes("raiva") || texto.includes("irritado")) return "raiva";
-  if (texto.includes("medo") || texto.includes("inseguro")) return "medo";
-  if (texto.includes("cansado") || texto.includes("esgotado")) return "cansaco";
+// ==========================
+// DETECTAR CONTEXTO
+// ==========================
+function detectarContexto(texto) {
+  texto = texto.toLowerCase();
 
+  if (/(dinheiro|contas|financeiro)/.test(texto)) return "financeiro";
+  if (/(trabalho|empresa|chefe)/.test(texto)) return "trabalho";
+  if (/(amor|relacionamento|parceiro|família)/.test(texto)) return "relacionamento";
+  if (/(autoestima|confiança|autoconfiança)/.test(texto)) return "autoestima";
+  if (/(futuro|objetivo|meta|planejamento)/.test(texto)) return "futuro";
+  return "geral";
+}
+
+// ==========================
+// INFERIR EMOÇÃO IMPLÍCITA
+// ==========================
+function inferirEmocao(texto) {
+  texto = texto.toLowerCase();
+
+  if (/(triste|deprimido|desanimado|desmotivado)/.test(texto)) return "tristeza";
+  if (/(ansioso|nervoso|inseguro)/.test(texto)) return "ansiedade";
+  if (/(raiva|irritado|zangado)/.test(texto)) return "raiva";
+  if (/(medo|receio|preocupado)/.test(texto)) return "medo";
+  if (/(cansado|exausto|sobrecarregado)/.test(texto)) return "cansaço";
   return "neutro";
 }
 
 // ==========================
-// GERAR RESPOSTA COM MEMÓRIA E EVITANDO REPETIÇÃO
+// GERAR RESPOSTA COMPLETA
 // ==========================
 function gerarResposta(textoUsuario) {
-  const estado = detectarEstado(textoUsuario);
+  const intencao = detectarIntencao(textoUsuario);
+  const contexto = detectarContexto(textoUsuario);
+  const emocao = inferirEmocao(textoUsuario);
   const memoria = carregarMemoria();
 
-  // Inicializa contador se não existir
-  if (!memoria[estado]) memoria[estado] = 0;
-  memoria[estado]++;
+  // Inicializa contadores
+  if (!memoria[intencao]) memoria[intencao] = 0;
+  memoria[intencao]++;
   salvarMemoria(memoria);
 
-  const respostasEstado = respostas[estado];
+  // Base da resposta
   let resposta = "";
 
-  // Seleciona resposta baseada na contagem para evitar repetição exata
-  if (memoria[estado] === 1) {
-    resposta = respostasEstado[0];
-  } else if (memoria[estado] === 2 && respostasEstado[1]) {
-    resposta = respostasEstado[1];
-  } else if (respostasEstado[2]) {
-    resposta = respostasEstado[2];
-  } else {
-    resposta = respostasEstado[0];
+  // Conecta intenção + contexto + emoção
+  switch (intencao) {
+    case "saudacao":
+      resposta = respostas.saudacao[Math.min(memoria[intencao]-1, respostas.saudacao.length-1)];
+      break;
+    case "desabafo":
+      resposta = `Percebo ${emocao}. `;
+      resposta += respostas.desabafo[Math.min(memoria[intencao]-1, respostas.desabafo.length-1)];
+      break;
+    case "pedidoAjuda":
+      resposta = respostas.pedidoAjuda[Math.min(memoria[intencao]-1, respostas.pedidoAjuda.length-1)];
+      break;
+    case "reflexao":
+      resposta = respostas.reflexao[Math.min(memoria[intencao]-1, respostas.reflexao.length-1)];
+      break;
+    case "casual":
+      resposta = respostas.casual[Math.min(memoria[intencao]-1, respostas.casual.length-1)];
+      break;
+    default:
+      resposta = respostas.default[Math.min(memoria[intencao]-1, respostas.default.length-1)];
+  }
+
+  // Contexto adicional para aprofundar
+  if (contexto !== "geral" && intencao !== "saudacao") {
+    resposta += ` Notei que isso envolve ${contexto}.`;
   }
 
   return resposta;
@@ -145,8 +171,7 @@ function gerarResposta(textoUsuario) {
 // ==========================
 // RECONHECIMENTO DE VOZ
 // ==========================
-const SpeechRecognition =
-  window.SpeechRecognition || window.webkitSpeechRecognition;
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
 if (!SpeechRecognition) {
   status.innerText = "Reconhecimento de voz não suportado.";
