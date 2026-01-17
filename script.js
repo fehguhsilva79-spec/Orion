@@ -36,13 +36,13 @@ stopBtn.addEventListener("click", () => {
 });
 
 // ==========================
-// MEMÓRIA LEVE
+// MEMÓRIA LOCAL
 // ==========================
 const memoriaKey = "orion_memoria";
 
 function carregarMemoria() {
   const dados = localStorage.getItem(memoriaKey);
-  if (!dados) return {};
+  if (!dados) return { conversas: [] };
   return JSON.parse(dados);
 }
 
@@ -56,10 +56,10 @@ function salvarMemoria(memoria) {
 const respostas = {
   saudacao: [
     "Olá! Estou com você. Fale no seu tempo.",
-    "Sempre pronto para ouvir o que importa pra você."
+    "Como está se sentindo hoje?"
   ],
   desabafo: [
-    "Entendo. Quer me contar mais sobre isso?",
+    "Percebo sua emoção. Quer me contar mais sobre isso?",
     "O que mais tem te incomodado nesse assunto?"
   ],
   pedidoAjuda: [
@@ -74,9 +74,13 @@ const respostas = {
     "Continuo aqui, posso ouvir você.",
     "Fale o que quiser, sem pressa."
   ],
+  financeiro: [
+    "Situações financeiras podem gerar preocupação.",
+    "Vamos analisar juntos o que podemos fazer."
+  ],
   default: [
-    "Percebo o que você disse. Quer explorar isso comigo?",
-    "Me conte mais para que eu compreenda melhor."
+    "Estou com você. Pode continuar.",
+    "Fale no seu tempo."
   ]
 };
 
@@ -108,7 +112,7 @@ function detectarContexto(texto) {
 }
 
 // ==========================
-// INFERIR EMOÇÃO IMPLÍCITA
+// INFERIR EMOÇÃO
 // ==========================
 function inferirEmocao(texto) {
   texto = texto.toLowerCase();
@@ -122,23 +126,24 @@ function inferirEmocao(texto) {
 }
 
 // ==========================
-// GERAR RESPOSTA COMPLETA
+// GERAR RESPOSTA FINAL
 // ==========================
 function gerarResposta(textoUsuario) {
+  const memoria = carregarMemoria();
   const intencao = detectarIntencao(textoUsuario);
   const contexto = detectarContexto(textoUsuario);
   const emocao = inferirEmocao(textoUsuario);
-  const memoria = carregarMemoria();
 
-  // Inicializa contadores
+  // Incrementa memória da intenção
   if (!memoria[intencao]) memoria[intencao] = 0;
   memoria[intencao]++;
+  // Armazena conversa completa
+  memoria.conversas.push({ usuario: textoUsuario, orion: null });
   salvarMemoria(memoria);
 
   // Base da resposta
   let resposta = "";
 
-  // Conecta intenção + contexto + emoção
   switch (intencao) {
     case "saudacao":
       resposta = respostas.saudacao[Math.min(memoria[intencao]-1, respostas.saudacao.length-1)];
@@ -156,14 +161,21 @@ function gerarResposta(textoUsuario) {
     case "casual":
       resposta = respostas.casual[Math.min(memoria[intencao]-1, respostas.casual.length-1)];
       break;
+    case "financeiro":
+      resposta = respostas.financeiro[Math.min(memoria[intencao]-1, respostas.financeiro.length-1)];
+      break;
     default:
       resposta = respostas.default[Math.min(memoria[intencao]-1, respostas.default.length-1)];
   }
 
-  // Contexto adicional para aprofundar
+  // Adiciona contexto para profundidade
   if (contexto !== "geral" && intencao !== "saudacao") {
     resposta += ` Notei que isso envolve ${contexto}.`;
   }
+
+  // Atualiza a conversa na memória
+  memoria.conversas[memoria.conversas.length-1].orion = resposta;
+  salvarMemoria(memoria);
 
   return resposta;
 }
@@ -188,13 +200,19 @@ if (!SpeechRecognition) {
 
   recognition.onresult = (event) => {
     const texto = event.results[0][0].transcript;
-    output.innerHTML += `<strong>Você:</strong> ${texto}<br>`;
+
+    // Saída formatada com classes para CSS atualizado
+    output.innerHTML += `<div class="usuario"><strong>Você:</strong> ${texto}</div>`;
 
     const resposta = gerarResposta(texto);
-    output.innerHTML += `<strong>Orion:</strong> ${resposta}<br><br>`;
+
+    output.innerHTML += `<div class="orion"><strong>Orion:</strong> ${resposta}</div><br>`;
 
     falar(resposta);
     status.innerText = "Orion está refletindo com você.";
+
+    // Scroll automático
+    output.scrollTop = output.scrollHeight;
   };
 
   recognition.onerror = () => {
