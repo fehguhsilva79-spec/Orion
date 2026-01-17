@@ -134,7 +134,7 @@
     }
 
     // ==========================
-    // GERAR RESPOSTA COM MEMÓRIA
+    // GERAR RESPOSTA COM MEMÓRIA E FLUXO NATURAL
     // ==========================
     function gerarResposta(textoUsuario) {
       const estado = detectarEstado(textoUsuario);
@@ -145,14 +145,15 @@
       salvarMemoria(memoria);
 
       const respostasEstado = respostas[estado];
-      let resposta = respostasEstado[0];
+      let resposta = "";
 
-      if (memoria[estado] >= 2 && respostasEstado[1]) {
-        resposta += ` ${respostasEstado[1]}`;
-      }
-
-      if (respostasEstado[2]) {
-        resposta += ` ${respostasEstado[2]}`;
+      // Se for saudação, usa respostas de saudação apenas uma vez
+      if (estado === "saudacao" && memoria[estado] === 1) {
+        resposta = respostasEstado.join(" ");
+      } else {
+        // Alterna respostas por rodada e memória
+        const index = Math.min(memoria[estado]-1, respostasEstado.length-1);
+        resposta = respostasEstado[index];
       }
 
       return resposta;
