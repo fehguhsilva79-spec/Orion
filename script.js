@@ -3,190 +3,140 @@
 // ==========================
 const micBtn = document.getElementById("mic-btn");
 const stopBtn = document.getElementById("stop-btn");
-const status = document.getElementById("status");
+const statusEl = document.getElementById("status");
 const output = document.getElementById("output");
 
 // ==========================
-// FUNÇÃO DE FALA
+// CONTEXTO DE SESSÃO (CORAÇÃO DO ORION)
+// ==========================
+const session = {
+  ativa: false,
+  tema: null,
+  emocao: null,
+  profundidade: 0,
+  ultimaFala: "",
+  silencioPermitido: false
+};
+
+// ==========================
+// VOZ DO ORION
 // ==========================
 function falar(texto) {
   if (!("speechSynthesis" in window)) return;
 
   speechSynthesis.cancel();
 
-  const utterance = new SpeechSynthesisUtterance(texto);
-  utterance.lang = "pt-BR";
-  utterance.rate = 1;
-  utterance.pitch = 1;
-  utterance.volume = 1;
+  const u = new SpeechSynthesisUtterance(texto);
+  u.lang = "pt-BR";
+  u.rate = 0.95;
+  u.pitch = 1;
+  u.volume = 1;
 
   const voices = speechSynthesis.getVoices();
-  const vozBR = voices.find(v => v.lang === "pt-BR");
-  if (vozBR) utterance.voice = vozBR;
+  const voz = voices.find(v => v.lang === "pt-BR");
+  if (voz) u.voice = voz;
 
-  speechSynthesis.speak(utterance);
+  speechSynthesis.speak(u);
 }
 
 // ==========================
-// FUNÇÃO PARAR FALA
+// PARAR FALA
 // ==========================
 stopBtn.addEventListener("click", () => {
   speechSynthesis.cancel();
-  status.innerText = "Orion parou de falar.";
+  statusEl.innerText = "Orion permaneceu em silêncio.";
 });
 
 // ==========================
-// MEMÓRIA LOCAL
+// MEMÓRIA LEVE (APENAS PADRÕES)
 // ==========================
-const memoriaKey = "orion_memoria";
+const MEM_KEY = "orion_memoria";
 
-function carregarMemoria() {
-  const dados = localStorage.getItem(memoriaKey);
-  if (!dados) return { conversas: [] };
-  return JSON.parse(dados);
+function loadMemory() {
+  return JSON.parse(localStorage.getItem(MEM_KEY)) || {};
 }
 
-function salvarMemoria(memoria) {
-  localStorage.setItem(memoriaKey, JSON.stringify(memoria));
+function saveMemory(mem) {
+  localStorage.setItem(MEM_KEY, JSON.stringify(mem));
 }
 
 // ==========================
-// RESPOSTAS BASE
+// DETECÇÃO SEMÂNTICA SIMPLES
 // ==========================
-const respostas = {
-  saudacao: [
-    "Olá! Estou com você. Fale no seu tempo.",
-    "Como está se sentindo hoje?"
-  ],
-  desabafo: [
-    "Percebo sua emoção. Quer me contar mais sobre isso?",
-    "O que mais tem te incomodado nesse assunto?"
-  ],
-  pedidoAjuda: [
-    "Vamos pensar juntos sobre isso.",
-    "Como você imagina uma saída para essa situação?"
-  ],
-  reflexao: [
-    "Interessante. O que essa situação te faz sentir?",
-    "Vamos analisar juntos o que isso significa para você."
-  ],
-  casual: [
-    "Continuo aqui, posso ouvir você.",
-    "Fale o que quiser, sem pressa."
-  ],
-  financeiro: [
-    "Situações financeiras podem gerar preocupação.",
-    "Vamos analisar juntos o que podemos fazer."
-  ],
-  default: [
-    "Estou com você. Pode continuar.",
-    "Fale no seu tempo."
-  ]
-};
-
-// ==========================
-// DETECTAR INTENÇÃO
-// ==========================
-function detectarIntencao(texto) {
+function detectarTema(texto) {
   texto = texto.toLowerCase();
 
-  if (/(olá|oi|bom dia|boa tarde|boa noite)/.test(texto)) return "saudacao";
-  if (/(preciso de ajuda|me ajude|não sei o que fazer)/.test(texto)) return "pedidoAjuda";
-  if (/(estou triste|estou cansado|ansioso|me sinto|medo)/.test(texto)) return "desabafo";
-  if (/(penso|refletindo|me questiono)/.test(texto)) return "reflexao";
-  return "casual";
-}
+  if (/dinheiro|financeiro|conta|dívida|grana/.test(texto)) return "financeiro";
+  if (/trabalho|emprego|empresa|chefe/.test(texto)) return "trabalho";
+  if (/relacionamento|amor|casamento|família/.test(texto)) return "relacionamento";
+  if (/futuro|decisão|escolha|vida/.test(texto)) return "decisão";
 
-// ==========================
-// DETECTAR CONTEXTO
-// ==========================
-function detectarContexto(texto) {
-  texto = texto.toLowerCase();
-
-  if (/(dinheiro|contas|financeiro)/.test(texto)) return "financeiro";
-  if (/(trabalho|empresa|chefe)/.test(texto)) return "trabalho";
-  if (/(amor|relacionamento|parceiro|família)/.test(texto)) return "relacionamento";
-  if (/(autoestima|confiança|autoconfiança)/.test(texto)) return "autoestima";
-  if (/(futuro|objetivo|meta|planejamento)/.test(texto)) return "futuro";
   return "geral";
 }
 
-// ==========================
-// INFERIR EMOÇÃO
-// ==========================
-function inferirEmocao(texto) {
+function detectarEmocao(texto) {
   texto = texto.toLowerCase();
 
-  if (/(triste|deprimido|desanimado|desmotivado)/.test(texto)) return "tristeza";
-  if (/(ansioso|nervoso|inseguro)/.test(texto)) return "ansiedade";
-  if (/(raiva|irritado|zangado)/.test(texto)) return "raiva";
-  if (/(medo|receio|preocupado)/.test(texto)) return "medo";
-  if (/(cansado|exausto|sobrecarregado)/.test(texto)) return "cansaço";
+  if (/triste|desanimado|sem vontade/.test(texto)) return "tristeza";
+  if (/ansioso|preocupado|tenso/.test(texto)) return "ansiedade";
+  if (/raiva|irritado|ódio/.test(texto)) return "raiva";
+  if (/medo|inseguro/.test(texto)) return "medo";
+  if (/cansado|exausto/.test(texto)) return "cansaço";
+
   return "neutro";
 }
 
 // ==========================
-// GERAR RESPOSTA FINAL
+// GERADOR DE CONVERSA CONTÍNUA
 // ==========================
-function gerarResposta(textoUsuario) {
-  const memoria = carregarMemoria();
-  const intencao = detectarIntencao(textoUsuario);
-  const contexto = detectarContexto(textoUsuario);
-  const emocao = inferirEmocao(textoUsuario);
+function gerarResposta(texto) {
+  const temaAtual = detectarTema(texto);
+  const emocaoAtual = detectarEmocao(texto);
 
-  // Incrementa memória da intenção
-  if (!memoria[intencao]) memoria[intencao] = 0;
-  memoria[intencao]++;
-  // Armazena conversa completa
-  memoria.conversas.push({ usuario: textoUsuario, orion: null });
-  salvarMemoria(memoria);
+  // Início de sessão
+  if (!session.ativa) {
+    session.ativa = true;
+    session.tema = temaAtual;
+    session.emocao = emocaoAtual;
+    session.profundidade = 1;
 
-  // Base da resposta
-  let resposta = "";
-
-  switch (intencao) {
-    case "saudacao":
-      resposta = respostas.saudacao[Math.min(memoria[intencao]-1, respostas.saudacao.length-1)];
-      break;
-    case "desabafo":
-      resposta = `Percebo ${emocao}. `;
-      resposta += respostas.desabafo[Math.min(memoria[intencao]-1, respostas.desabafo.length-1)];
-      break;
-    case "pedidoAjuda":
-      resposta = respostas.pedidoAjuda[Math.min(memoria[intencao]-1, respostas.pedidoAjuda.length-1)];
-      break;
-    case "reflexao":
-      resposta = respostas.reflexao[Math.min(memoria[intencao]-1, respostas.reflexao.length-1)];
-      break;
-    case "casual":
-      resposta = respostas.casual[Math.min(memoria[intencao]-1, respostas.casual.length-1)];
-      break;
-    case "financeiro":
-      resposta = respostas.financeiro[Math.min(memoria[intencao]-1, respostas.financeiro.length-1)];
-      break;
-    default:
-      resposta = respostas.default[Math.min(memoria[intencao]-1, respostas.default.length-1)];
+    return "Estou aqui. O que te trouxe até esse momento?";
   }
 
-  // Adiciona contexto para profundidade
-  if (contexto !== "geral" && intencao !== "saudacao") {
-    resposta += ` Notei que isso envolve ${contexto}.`;
+  // Continuação de tema
+  if (temaAtual === session.tema) {
+    session.profundidade++;
+
+    if (session.profundidade === 2) {
+      return `Percebo ${session.emocao || "algo importante"} nisso. O que mais pesa para você agora?`;
+    }
+
+    if (session.profundidade === 3) {
+      return "Se você fosse totalmente honesto consigo mesmo, o que estaria evitando admitir?";
+    }
+
+    if (session.profundidade >= 4) {
+      session.silencioPermitido = true;
+      return "Fique em silêncio por alguns segundos. Às vezes a clareza vem sem palavras.";
+    }
   }
 
-  // Atualiza a conversa na memória
-  memoria.conversas[memoria.conversas.length-1].orion = resposta;
-  salvarMemoria(memoria);
+  // Mudança de tema consciente
+  session.tema = temaAtual;
+  session.emocao = emocaoAtual;
+  session.profundidade = 1;
 
-  return resposta;
+  return "Entendo. Vamos olhar para isso com calma. O que você sente agora?";
 }
 
 // ==========================
 // RECONHECIMENTO DE VOZ
 // ==========================
-const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+const SpeechRecognition =
+  window.SpeechRecognition || window.webkitSpeechRecognition;
 
 if (!SpeechRecognition) {
-  status.innerText = "Reconhecimento de voz não suportado.";
+  statusEl.innerText = "Reconhecimento de voz não suportado.";
 } else {
   const recognition = new SpeechRecognition();
   recognition.lang = "pt-BR";
@@ -194,28 +144,25 @@ if (!SpeechRecognition) {
   recognition.continuous = false;
 
   micBtn.addEventListener("click", () => {
-    status.innerText = "Orion está ouvindo...";
+    statusEl.innerText = "Orion está ouvindo...";
     recognition.start();
   });
 
-  recognition.onresult = (event) => {
-    const texto = event.results[0][0].transcript;
-
-    // Saída formatada com classes para CSS atualizado
-    output.innerHTML += `<div class="usuario"><strong>Você:</strong> ${texto}</div>`;
+  recognition.onresult = (e) => {
+    const texto = e.results[0][0].transcript;
+    output.innerHTML += `<strong>Você:</strong> ${texto}<br>`;
 
     const resposta = gerarResposta(texto);
 
-    output.innerHTML += `<div class="orion"><strong>Orion:</strong> ${resposta}</div><br>`;
+    if (resposta) {
+      output.innerHTML += `<strong>Orion:</strong> ${resposta}<br><br>`;
+      falar(resposta);
+    }
 
-    falar(resposta);
-    status.innerText = "Orion está refletindo com você.";
-
-    // Scroll automático
-    output.scrollTop = output.scrollHeight;
+    statusEl.innerText = "Orion permanece presente.";
   };
 
   recognition.onerror = () => {
-    status.innerText = "Erro ao ouvir. Tente novamente.";
+    statusEl.innerText = "Houve um erro ao ouvir. Tente novamente.";
   };
 }
