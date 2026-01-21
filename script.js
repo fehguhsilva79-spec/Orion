@@ -1,29 +1,16 @@
 // ==========================
-// ELEMENTOS DA INTERFACE
+// ELEMENTOS
 // ==========================
 const micBtn = document.getElementById("mic-btn");
 const stopBtn = document.getElementById("stop-btn");
-const statusEl = document.getElementById("status");
+const status = document.getElementById("status");
 const output = document.getElementById("output");
 
 // ==========================
-// CONTEXTO DE SESSÃO (CORAÇÃO DO ORION)
-// ==========================
-const session = {
-  ativa: false,
-  tema: null,
-  emocao: null,
-  profundidade: 0,
-  ultimaFala: "",
-  silencioPermitido: false
-};
-
-// ==========================
-// VOZ DO ORION
+// VOZ
 // ==========================
 function falar(texto) {
   if (!("speechSynthesis" in window)) return;
-
   speechSynthesis.cancel();
 
   const u = new SpeechSynthesisUtterance(texto);
@@ -33,110 +20,142 @@ function falar(texto) {
   u.volume = 1;
 
   const voices = speechSynthesis.getVoices();
-  const voz = voices.find(v => v.lang === "pt-BR");
-  if (voz) u.voice = voz;
+  const br = voices.find(v => v.lang === "pt-BR");
+  if (br) u.voice = br;
 
   speechSynthesis.speak(u);
 }
 
-// ==========================
-// PARAR FALA
-// ==========================
 stopBtn.addEventListener("click", () => {
   speechSynthesis.cancel();
-  statusEl.innerText = "Orion permaneceu em silêncio.";
+  status.innerText = "Silêncio mantido.";
 });
 
 // ==========================
-// MEMÓRIA LEVE (APENAS PADRÕES)
+// ESTADO GLOBAL DO ORION
 // ==========================
-const MEM_KEY = "orion_memoria";
+const estadoKey = "orion_estado";
 
-function loadMemory() {
-  return JSON.parse(localStorage.getItem(MEM_KEY)) || {};
+function estadoInicial() {
+  return {
+    fase: 1, // 1 acolhimento | 2 organização | 3 clareza | 4 saída | 5 fechamento
+    historico: [],
+    problemaCentral: null,
+    clarezaAlcancada: false
+  };
 }
 
-function saveMemory(mem) {
-  localStorage.setItem(MEM_KEY, JSON.stringify(mem));
+function carregarEstado() {
+  const e = localStorage.getItem(estadoKey);
+  return e ? JSON.parse(e) : estadoInicial();
+}
+
+function salvarEstado(e) {
+  localStorage.setItem(estadoKey, JSON.stringify(e));
 }
 
 // ==========================
-// DETECÇÃO SEMÂNTICA SIMPLES
+// UTILIDADES
 // ==========================
-function detectarTema(texto) {
-  texto = texto.toLowerCase();
+function registrar(autor, texto) {
+  output.innerHTML += `<strong>${autor}:</strong> ${texto}<br><br>`;
+  output.scrollTop = output.scrollHeight;
+}
 
-  if (/dinheiro|financeiro|conta|dívida|grana/.test(texto)) return "financeiro";
-  if (/trabalho|emprego|empresa|chefe/.test(texto)) return "trabalho";
+function normalizar(t) {
+  return t.toLowerCase();
+}
+
+// ==========================
+// INTERPRETAÇÃO SIMPLES
+// ==========================
+function detectarProblema(texto) {
+  if (/dinheiro|financeiro|conta|grana/.test(texto)) return "financeiro";
+  if (/trabalho|emprego|chefe|empresa/.test(texto)) return "trabalho";
   if (/relacionamento|amor|casamento|família/.test(texto)) return "relacionamento";
-  if (/futuro|decisão|escolha|vida/.test(texto)) return "decisão";
-
-  return "geral";
-}
-
-function detectarEmocao(texto) {
-  texto = texto.toLowerCase();
-
-  if (/triste|desanimado|sem vontade/.test(texto)) return "tristeza";
-  if (/ansioso|preocupado|tenso/.test(texto)) return "ansiedade";
-  if (/raiva|irritado|ódio/.test(texto)) return "raiva";
-  if (/medo|inseguro/.test(texto)) return "medo";
-  if (/cansado|exausto/.test(texto)) return "cansaço";
-
-  return "neutro";
+  if (/medo|ansioso|triste|cansado|perdido/.test(texto)) return "emocional";
+  return "indefinido";
 }
 
 // ==========================
-// GERADOR DE CONVERSA CONTÍNUA
+// MOTOR DE CONVERSA (O CORAÇÃO)
 // ==========================
-function gerarResposta(texto) {
-  const temaAtual = detectarTema(texto);
-  const emocaoAtual = detectarEmocao(texto);
+function responder(textoUsuario) {
+  let estado = carregarEstado();
+  estado.historico.push(textoUsuario);
 
-  // Início de sessão
-  if (!session.ativa) {
-    session.ativa = true;
-    session.tema = temaAtual;
-    session.emocao = emocaoAtual;
-    session.profundidade = 1;
+  let resposta = "";
 
-    return "Estou aqui. O que te trouxe até esse momento?";
+  // ======================
+  // FASE 1 — ACOLHIMENTO
+  // ======================
+  if (estado.fase === 1) {
+    resposta = "Estou com você. Fale com calma. O que está pesando agora?";
+    estado.fase = 2;
   }
 
-  // Continuação de tema
-  if (temaAtual === session.tema) {
-    session.profundidade++;
+  // ======================
+  // FASE 2 — ORGANIZAÇÃO
+  // ======================
+  else if (estado.fase === 2) {
+    estado.problemaCentral = detectarProblema(textoUsuario);
 
-    if (session.profundidade === 2) {
-      return `Percebo ${session.emocao || "algo importante"} nisso. O que mais pesa para você agora?`;
-    }
+    resposta =
+      "Vou organizar isso com você. " +
+      "Do que você falou, o ponto central parece ser algo que está tirando sua estabilidade. " +
+      "O que exatamente nessa situação mais te preocupa hoje?";
 
-    if (session.profundidade === 3) {
-      return "Se você fosse totalmente honesto consigo mesmo, o que estaria evitando admitir?";
-    }
-
-    if (session.profundidade >= 4) {
-      session.silencioPermitido = true;
-      return "Fique em silêncio por alguns segundos. Às vezes a clareza vem sem palavras.";
-    }
+    estado.fase = 3;
   }
 
-  // Mudança de tema consciente
-  session.tema = temaAtual;
-  session.emocao = emocaoAtual;
-  session.profundidade = 1;
+  // ======================
+  // FASE 3 — CLAREZA
+  // ======================
+  else if (estado.fase === 3) {
+    resposta =
+      "Vamos separar as coisas. " +
+      "O que, nessa situação, está sob o seu controle — e o que não está?";
 
-  return "Entendo. Vamos olhar para isso com calma. O que você sente agora?";
+    estado.fase = 4;
+  }
+
+  // ======================
+  // FASE 4 — SAÍDA
+  // ======================
+  else if (estado.fase === 4) {
+    resposta =
+      "Com base no que você disse, existem caminhos possíveis aqui. " +
+      "Um envolve agir agora com o que você tem. " +
+      "Outro envolve esperar para reduzir risco. " +
+      "E um terceiro envolve mudar o foco. " +
+      "Qual deles faz mais sentido para você neste momento?";
+
+    estado.fase = 5;
+  }
+
+  // ======================
+  // FASE 5 — FECHAMENTO
+  // ======================
+  else {
+    resposta =
+      "Você não precisa decidir tudo agora. " +
+      "Mas agora você tem clareza suficiente para não agir no escuro. " +
+      "Quando quiser continuar, estarei aqui.";
+
+    estado = estadoInicial(); // encerra ciclo
+  }
+
+  salvarEstado(estado);
+  return resposta;
 }
 
 // ==========================
 // RECONHECIMENTO DE VOZ
 // ==========================
-const SpeechRecognition =
-  window.SpeechRecognition || window.webkitSpeechRecognition;
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
 if (!SpeechRecognition) {
-  statusEl.innerText = "Reconhecimento de voz não suportado.";
+  status.innerText = "Reconhecimento de voz não suportado.";
 } else {
   const recognition = new SpeechRecognition();
   recognition.lang = "pt-BR";
@@ -144,25 +163,22 @@ if (!SpeechRecognition) {
   recognition.continuous = false;
 
   micBtn.addEventListener("click", () => {
-    statusEl.innerText = "Orion está ouvindo...";
+    status.innerText = "Orion está ouvindo...";
     recognition.start();
   });
 
-  recognition.onresult = (e) => {
-    const texto = e.results[0][0].transcript;
-    output.innerHTML += `<strong>Você:</strong> ${texto}<br>`;
+  recognition.onresult = (event) => {
+    const texto = event.results[0][0].transcript;
+    registrar("Você", texto);
 
-    const resposta = gerarResposta(texto);
+    const resposta = responder(texto);
+    registrar("Orion", resposta);
 
-    if (resposta) {
-      output.innerHTML += `<strong>Orion:</strong> ${resposta}<br><br>`;
-      falar(resposta);
-    }
-
-    statusEl.innerText = "Orion permanece presente.";
+    falar(resposta);
+    status.innerText = "Orion está com você.";
   };
 
   recognition.onerror = () => {
-    statusEl.innerText = "Houve um erro ao ouvir. Tente novamente.";
+    status.innerText = "Erro ao ouvir. Tente novamente.";
   };
 }
