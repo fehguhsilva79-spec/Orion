@@ -15,21 +15,23 @@
       <button id="stop-btn">Parar</button>
     </div>
 
-    <div id="status">Orion está despertando, em breve, clareza real.</div>
+    <div id="status">Orion em repouso.</div>
     <div id="output"></div>
   </div>
 
   <script>
     // ==========================
-    // ELEMENTOS DA INTERFACE
+    // ELEMENTOS
     // ==========================
     const micBtn = document.getElementById("mic-btn");
     const stopBtn = document.getElementById("stop-btn");
     const status = document.getElementById("status");
     const output = document.getElementById("output");
 
+    let isListening = false;
+
     // ==========================
-    // FUNÇÃO DE FALA
+    // FALA (TTS)
     // ==========================
     function falar(texto) {
       if (!("speechSynthesis" in window)) return;
@@ -42,30 +44,30 @@
       utterance.pitch = 1;
       utterance.volume = 1;
 
-      const voices = speechSynthesis.getVoices();
-      const vozBR = voices.find(v => v.lang === "pt-BR");
-      if (vozBR) utterance.voice = vozBR;
+      utterance.onstart = () => {
+        status.innerText = "Orion está falando...";
+      };
+
+      utterance.onend = () => {
+        status.innerText = "Orion aguardando você.";
+      };
 
       speechSynthesis.speak(utterance);
     }
 
-    // ==========================
-    // FUNÇÃO PARAR FALA
-    // ==========================
     stopBtn.addEventListener("click", () => {
       speechSynthesis.cancel();
-      status.innerText = "Orion parou de falar.";
+      status.innerText = "Orion interrompido.";
+      isListening = false;
     });
 
     // ==========================
-    // MEMÓRIA LEVE (LOCAL)
+    // MEMÓRIA LOCAL
     // ==========================
     const memoriaKey = "orion_memoria";
 
     function carregarMemoria() {
-      const dados = localStorage.getItem(memoriaKey);
-      if (!dados) return {};
-      return JSON.parse(dados);
+      return JSON.parse(localStorage.getItem(memoriaKey)) || {};
     }
 
     function salvarMemoria(memoria) {
@@ -73,124 +75,108 @@
     }
 
     // ==========================
-    // RESPOSTAS BASE POR EMOÇÃO
+    // RESPOSTAS
     // ==========================
     const respostas = {
       saudacao: [
-        "Olá! Estou com você. Fale no seu tempo.",
-        "Como está se sentindo hoje?",
+        "Olá. Estou aqui com você.",
+        "Pode falar, estou ouvindo."
       ],
       tristeza: [
-        "Percebo tristeza. O que fez esse sentimento aparecer hoje?",
-        "Quando a tristeza insiste, ela deixa de ser apenas um momento.",
-        "O que você tem evitado encarar?"
+        "Percebo tristeza. O que aconteceu?",
+        "Quer me contar o que está pesando hoje?"
       ],
       ansiedade: [
-        "A ansiedade pode sinalizar sobrecarga.",
-        "Respire fundo e tente identificar a causa.",
-        "Quer me contar o que está te tirando do eixo?"
+        "Vamos com calma. O que está te acelerando?",
+        "Respire. O que está fora de controle agora?"
       ],
       raiva: [
-        "Sinto raiva em você. O que te deixou assim?",
-        "Às vezes, expressar ajuda a clarear a mente.",
-        "Como você quer lidar com isso agora?"
+        "A raiva costuma esconder algo mais profundo.",
+        "O que te tirou do eixo?"
       ],
       medo: [
-        "O medo aparece quando algo importa de verdade.",
-        "Ele não significa fraqueza.",
-        "Quer me contar do que está receoso?"
+        "O medo mostra que isso importa.",
+        "Do que você está tentando se proteger?"
       ],
       cansaço: [
-        "O cansaço constante é um sinal de que precisa de atenção.",
-        "Talvez seja hora de desacelerar um pouco.",
-        "O que mais te drena energia hoje?"
+        "Seu corpo e mente pedem pausa.",
+        "O que mais te drena energia?"
       ],
       financeiro: [
-        "Situações financeiras podem gerar grande preocupação.",
-        "Vamos analisar juntos o que é possível fazer.",
-        "Como você quer lidar com esse desafio agora?"
+        "Dinheiro gera pressão real.",
+        "Quer organizar isso juntos?"
       ],
       default: [
-        "Estou com você. Pode continuar.",
-        "Fale no seu tempo.",
+        "Entendo. Continue.",
+        "Pode falar mais sobre isso."
       ]
     };
 
-    // ==========================
-    // DETECTAR ESTADO
-    // ==========================
     function detectarEstado(texto) {
       texto = texto.toLowerCase();
-
-      if (texto.includes("olá") || texto.includes("oi") || texto.includes("bom dia") || texto.includes("boa noite")) return "saudacao";
+      if (texto.match(/oi|olá|bom dia|boa noite/)) return "saudacao";
       if (texto.includes("triste")) return "tristeza";
-      if (texto.includes("ansioso") || texto.includes("ansiedade")) return "ansiedade";
+      if (texto.includes("ansioso")) return "ansiedade";
       if (texto.includes("raiva") || texto.includes("irritado")) return "raiva";
-      if (texto.includes("medo") || texto.includes("inseguro")) return "medo";
-      if (texto.includes("cansado") || texto.includes("esgotado")) return "cansaço";
-      if (texto.includes("dinheiro") || texto.includes("financeiro") || texto.includes("falta de grana")) return "financeiro";
-
+      if (texto.includes("medo")) return "medo";
+      if (texto.includes("cansado")) return "cansaço";
+      if (texto.includes("dinheiro") || texto.includes("financeiro")) return "financeiro";
       return "default";
     }
 
-    // ==========================
-    // GERAR RESPOSTA COM MEMÓRIA E FLUXO NATURAL
-    // ==========================
     function gerarResposta(textoUsuario) {
       const estado = detectarEstado(textoUsuario);
       const memoria = carregarMemoria();
 
-      if (!memoria[estado]) memoria[estado] = 0;
-      memoria[estado]++;
+      memoria[estado] = (memoria[estado] || 0) + 1;
       salvarMemoria(memoria);
 
-      const respostasEstado = respostas[estado];
-      let resposta = "";
-
-      // Se for saudação, usa respostas de saudação apenas uma vez
-      if (estado === "saudacao" && memoria[estado] === 1) {
-        resposta = respostasEstado.join(" ");
-      } else {
-        // Alterna respostas por rodada e memória
-        const index = Math.min(memoria[estado]-1, respostasEstado.length-1);
-        resposta = respostasEstado[index];
-      }
-
-      return resposta;
+      const lista = respostas[estado];
+      const index = Math.min(memoria[estado] - 1, lista.length - 1);
+      return lista[index];
     }
 
     // ==========================
     // RECONHECIMENTO DE VOZ
     // ==========================
-    const SpeechRecognition =
-      window.SpeechRecognition || window.webkitSpeechRecognition;
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
     if (!SpeechRecognition) {
       status.innerText = "Reconhecimento de voz não suportado.";
     } else {
       const recognition = new SpeechRecognition();
       recognition.lang = "pt-BR";
-      recognition.interimResults = false;
       recognition.continuous = false;
+      recognition.interimResults = false;
 
       micBtn.addEventListener("click", () => {
-        status.innerText = "Orion está ouvindo...";
+        if (isListening) return;
+
+        speechSynthesis.cancel();
         recognition.start();
+        isListening = true;
+        status.innerText = "Orion ouvindo...";
       });
 
       recognition.onresult = (event) => {
         const texto = event.results[0][0].transcript;
+
         output.innerHTML += `<strong>Você:</strong> ${texto}<br>`;
 
         const resposta = gerarResposta(texto);
         output.innerHTML += `<strong>Orion:</strong> ${resposta}<br><br>`;
 
         falar(resposta);
-        status.innerText = "Orion está refletindo com você.";
+        isListening = false;
       };
 
       recognition.onerror = () => {
         status.innerText = "Erro ao ouvir. Tente novamente.";
+        isListening = false;
+      };
+
+      recognition.onend = () => {
+        isListening = false;
       };
     }
   </script>
