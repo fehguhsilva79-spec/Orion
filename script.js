@@ -7,10 +7,16 @@ const status = document.getElementById("status");
 const output = document.getElementById("output");
 
 // ==========================
+// CONTROLE DE ESCUTA
+// ==========================
+let ouvindo = false;
+
+// ==========================
 // VOZ
 // ==========================
 function falar(texto) {
   if (!("speechSynthesis" in window)) return;
+
   speechSynthesis.cancel();
 
   const u = new SpeechSynthesisUtterance(texto);
@@ -28,20 +34,19 @@ function falar(texto) {
 
 stopBtn.addEventListener("click", () => {
   speechSynthesis.cancel();
-  status.innerText = "Silêncio mantido.";
+  status.innerText = "Orion em silêncio. Presente, mas quieto.";
 });
 
 // ==========================
-// ESTADO GLOBAL DO ORION
+// ESTADO DO ORION (MEMÓRIA)
 // ==========================
 const estadoKey = "orion_estado";
 
 function estadoInicial() {
   return {
-    fase: 1, // 1 acolhimento | 2 organização | 3 clareza | 4 saída | 5 fechamento
+    fase: 1,
     historico: [],
-    problemaCentral: null,
-    clarezaAlcancada: false
+    problemaCentral: null
   };
 }
 
@@ -67,7 +72,7 @@ function normalizar(t) {
 }
 
 // ==========================
-// INTERPRETAÇÃO SIMPLES
+// INTERPRETAÇÃO DO PROBLEMA
 // ==========================
 function detectarProblema(texto) {
   if (/dinheiro|financeiro|conta|grana/.test(texto)) return "financeiro";
@@ -78,19 +83,23 @@ function detectarProblema(texto) {
 }
 
 // ==========================
-// MOTOR DE CONVERSA (O CORAÇÃO)
+// MOTOR DE CONVERSA (ORION)
 // ==========================
 function responder(textoUsuario) {
   let estado = carregarEstado();
   estado.historico.push(textoUsuario);
 
+  const texto = normalizar(textoUsuario);
   let resposta = "";
 
   // ======================
   // FASE 1 — ACOLHIMENTO
   // ======================
   if (estado.fase === 1) {
-    resposta = "Estou com você. Fale com calma. O que está pesando agora?";
+    resposta =
+      "Estou aqui com você. Sem julgamento. " +
+      "O que está ocupando sua mente neste momento?";
+
     estado.fase = 2;
   }
 
@@ -98,12 +107,11 @@ function responder(textoUsuario) {
   // FASE 2 — ORGANIZAÇÃO
   // ======================
   else if (estado.fase === 2) {
-    estado.problemaCentral = detectarProblema(textoUsuario);
+    estado.problemaCentral = detectarProblema(texto);
 
     resposta =
-      "Vou organizar isso com você. " +
-      "Do que você falou, o ponto central parece ser algo que está tirando sua estabilidade. " +
-      "O que exatamente nessa situação mais te preocupa hoje?";
+      "Entendo. Pelo que você trouxe, isso parece tocar algo importante. " +
+      "Se tivesse que resumir o peso disso em uma frase, qual seria?";
 
     estado.fase = 3;
   }
@@ -113,22 +121,22 @@ function responder(textoUsuario) {
   // ======================
   else if (estado.fase === 3) {
     resposta =
-      "Vamos separar as coisas. " +
-      "O que, nessa situação, está sob o seu controle — e o que não está?";
+      "Vamos clarear isso juntos. " +
+      "O que, nessa situação, depende diretamente de você — e o que não depende?";
 
     estado.fase = 4;
   }
 
   // ======================
-  // FASE 4 — SAÍDA
+  // FASE 4 — POSSÍVEIS CAMINHOS
   // ======================
   else if (estado.fase === 4) {
     resposta =
-      "Com base no que você disse, existem caminhos possíveis aqui. " +
-      "Um envolve agir agora com o que você tem. " +
-      "Outro envolve esperar para reduzir risco. " +
+      "Com base no que você disse, existem alguns caminhos possíveis. " +
+      "Um envolve agir agora, mesmo com incerteza. " +
+      "Outro envolve esperar e observar. " +
       "E um terceiro envolve mudar o foco. " +
-      "Qual deles faz mais sentido para você neste momento?";
+      "Qual deles soa mais verdadeiro para você agora?";
 
     estado.fase = 5;
   }
@@ -138,11 +146,11 @@ function responder(textoUsuario) {
   // ======================
   else {
     resposta =
-      "Você não precisa decidir tudo agora. " +
-      "Mas agora você tem clareza suficiente para não agir no escuro. " +
+      "Você não precisa resolver tudo hoje. " +
+      "Mas agora você não está mais no escuro. " +
       "Quando quiser continuar, estarei aqui.";
 
-    estado = estadoInicial(); // encerra ciclo
+    estado = estadoInicial();
   }
 
   salvarEstado(estado);
@@ -163,11 +171,15 @@ if (!SpeechRecognition) {
   recognition.continuous = false;
 
   micBtn.addEventListener("click", () => {
+    if (ouvindo) return;
+    ouvindo = true;
     status.innerText = "Orion está ouvindo...";
     recognition.start();
   });
 
   recognition.onresult = (event) => {
+    ouvindo = false;
+
     const texto = event.results[0][0].transcript;
     registrar("Você", texto);
 
@@ -175,10 +187,15 @@ if (!SpeechRecognition) {
     registrar("Orion", resposta);
 
     falar(resposta);
-    status.innerText = "Orion está com você.";
+    status.innerText = "Orion permanece com você.";
   };
 
   recognition.onerror = () => {
-    status.innerText = "Erro ao ouvir. Tente novamente.";
+    ouvindo = false;
+    status.innerText = "Não consegui ouvir. Quando quiser, tente novamente.";
+  };
+
+  recognition.onend = () => {
+    ouvindo = false;
   };
 }
