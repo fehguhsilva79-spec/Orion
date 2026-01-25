@@ -6,9 +6,6 @@ const stopBtn = document.getElementById("stop-btn");
 const status = document.getElementById("status");
 const output = document.getElementById("output");
 
-// ==========================
-// CONTROLE DE ESCUTA
-// ==========================
 let ouvindo = false;
 
 // ==========================
@@ -18,15 +15,13 @@ function falar(texto) {
   if (!("speechSynthesis" in window)) return;
 
   speechSynthesis.cancel();
-
   const u = new SpeechSynthesisUtterance(texto);
   u.lang = "pt-BR";
   u.rate = 0.95;
   u.pitch = 1;
   u.volume = 1;
 
-  const voices = speechSynthesis.getVoices();
-  const br = voices.find(v => v.lang === "pt-BR");
+  const br = speechSynthesis.getVoices().find(v => v.lang === "pt-BR");
   if (br) u.voice = br;
 
   speechSynthesis.speak(u);
@@ -34,19 +29,55 @@ function falar(texto) {
 
 stopBtn.addEventListener("click", () => {
   speechSynthesis.cancel();
-  status.innerText = "Orion em silêncio. Presente, mas quieto.";
+  status.innerText = "Orion em silêncio. Presente.";
 });
 
 // ==========================
-// ESTADO DO ORION (MEMÓRIA)
+// ESTRUTURA DE VIDA DO USUÁRIO
+// ==========================
+const vidaKey = "orion_vida";
+
+function vidaInicial() {
+  return {
+    assuntos: [], // registros organizados
+    assuntoAtual: null
+  };
+}
+
+function carregarVida() {
+  const v = localStorage.getItem(vidaKey);
+  return v ? JSON.parse(v) : vidaInicial();
+}
+
+function salvarVida(v) {
+  localStorage.setItem(vidaKey, JSON.stringify(v));
+}
+
+// ==========================
+// UTILIDADES
+// ==========================
+function registrar(autor, texto) {
+  output.innerHTML += `<strong>${autor}:</strong> ${texto}<br><br>`;
+  output.scrollTop = output.scrollHeight;
+}
+
+function detectarTema(texto) {
+  texto = texto.toLowerCase();
+  if (/dinheiro|financeiro|conta|grana/.test(texto)) return "Financeiro";
+  if (/trabalho|emprego|empresa|chefe/.test(texto)) return "Trabalho";
+  if (/relacionamento|amor|casamento|família/.test(texto)) return "Relacionamentos";
+  if (/ansioso|triste|cansado|medo|perdido/.test(texto)) return "Emocional";
+  return "Geral";
+}
+
+// ==========================
+// ESTADO DO CICLO DE CONVERSA
 // ==========================
 const estadoKey = "orion_estado";
 
 function estadoInicial() {
   return {
-    fase: 1,
-    historico: [],
-    problemaCentral: null
+    fase: 1
   };
 }
 
@@ -60,36 +91,11 @@ function salvarEstado(e) {
 }
 
 // ==========================
-// UTILIDADES
-// ==========================
-function registrar(autor, texto) {
-  output.innerHTML += `<strong>${autor}:</strong> ${texto}<br><br>`;
-  output.scrollTop = output.scrollHeight;
-}
-
-function normalizar(t) {
-  return t.toLowerCase();
-}
-
-// ==========================
-// INTERPRETAÇÃO DO PROBLEMA
-// ==========================
-function detectarProblema(texto) {
-  if (/dinheiro|financeiro|conta|grana/.test(texto)) return "financeiro";
-  if (/trabalho|emprego|chefe|empresa/.test(texto)) return "trabalho";
-  if (/relacionamento|amor|casamento|família/.test(texto)) return "relacionamento";
-  if (/medo|ansioso|triste|cansado|perdido/.test(texto)) return "emocional";
-  return "indefinido";
-}
-
-// ==========================
-// MOTOR DE CONVERSA (ORION)
+// MOTOR DE CONVERSA + ORGANIZAÇÃO
 // ==========================
 function responder(textoUsuario) {
   let estado = carregarEstado();
-  estado.historico.push(textoUsuario);
-
-  const texto = normalizar(textoUsuario);
+  let vida = carregarVida();
   let resposta = "";
 
   // ======================
@@ -97,21 +103,30 @@ function responder(textoUsuario) {
   // ======================
   if (estado.fase === 1) {
     resposta =
-      "Estou aqui com você. Sem julgamento. " +
-      "O que está ocupando sua mente neste momento?";
+      "Estou com você. " +
+      "Quer continuar algo que já falamos antes ou começar um assunto novo?";
 
     estado.fase = 2;
   }
 
   // ======================
-  // FASE 2 — ORGANIZAÇÃO
+  // FASE 2 — DEFINIR ASSUNTO
   // ======================
   else if (estado.fase === 2) {
-    estado.problemaCentral = detectarProblema(texto);
+    const tema = detectarTema(textoUsuario);
+
+    const novoAssunto = {
+      tema,
+      data: new Date().toISOString(),
+      conversas: []
+    };
+
+    vida.assuntos.push(novoAssunto);
+    vida.assuntoAtual = vida.assuntos.length - 1;
 
     resposta =
-      "Entendo. Pelo que você trouxe, isso parece tocar algo importante. " +
-      "Se tivesse que resumir o peso disso em uma frase, qual seria?";
+      `Vamos organizar isso como um assunto sobre ${tema}. ` +
+      "O que exatamente está pesando nisso hoje?";
 
     estado.fase = 3;
   }
@@ -121,22 +136,20 @@ function responder(textoUsuario) {
   // ======================
   else if (estado.fase === 3) {
     resposta =
-      "Vamos clarear isso juntos. " +
-      "O que, nessa situação, depende diretamente de você — e o que não depende?";
+      "Vamos separar as coisas com calma. " +
+      "O que nessa situação está sob o seu controle agora?";
 
     estado.fase = 4;
   }
 
   // ======================
-  // FASE 4 — POSSÍVEIS CAMINHOS
+  // FASE 4 — CAMINHOS
   // ======================
   else if (estado.fase === 4) {
     resposta =
-      "Com base no que você disse, existem alguns caminhos possíveis. " +
-      "Um envolve agir agora, mesmo com incerteza. " +
-      "Outro envolve esperar e observar. " +
-      "E um terceiro envolve mudar o foco. " +
-      "Qual deles soa mais verdadeiro para você agora?";
+      "Existem caminhos possíveis aqui. " +
+      "Agir agora, esperar um pouco ou mudar o foco. " +
+      "Qual deles parece mais honesto com você hoje?";
 
     estado.fase = 5;
   }
@@ -146,13 +159,24 @@ function responder(textoUsuario) {
   // ======================
   else {
     resposta =
-      "Você não precisa resolver tudo hoje. " +
-      "Mas agora você não está mais no escuro. " +
-      "Quando quiser continuar, estarei aqui.";
+      "Não precisa resolver tudo agora. " +
+      "Esse assunto ficará guardado, e podemos continuar quando quiser.";
 
     estado = estadoInicial();
+    vida.assuntoAtual = null;
   }
 
+  // ======================
+  // SALVAR CONVERSA NO ASSUNTO
+  // ======================
+  if (vida.assuntoAtual !== null) {
+    vida.assuntos[vida.assuntoAtual].conversas.push(
+      { autor: "Você", texto: textoUsuario },
+      { autor: "Orion", texto: resposta }
+    );
+  }
+
+  salvarVida(vida);
   salvarEstado(estado);
   return resposta;
 }
@@ -179,20 +203,19 @@ if (!SpeechRecognition) {
 
   recognition.onresult = (event) => {
     ouvindo = false;
-
     const texto = event.results[0][0].transcript;
-    registrar("Você", texto);
 
+    registrar("Você", texto);
     const resposta = responder(texto);
     registrar("Orion", resposta);
 
     falar(resposta);
-    status.innerText = "Orion permanece com você.";
+    status.innerText = "Orion segue com você.";
   };
 
   recognition.onerror = () => {
     ouvindo = false;
-    status.innerText = "Não consegui ouvir. Quando quiser, tente novamente.";
+    status.innerText = "Não consegui ouvir. Tente novamente quando quiser.";
   };
 
   recognition.onend = () => {
