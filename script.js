@@ -32,6 +32,48 @@ stopBtn.onclick = () => {
 };
 
 // ==========================
+// USUÁRIO / PLANO / IA
+// ==========================
+const userKey = "orion_user";
+
+function userInicial() {
+  return {
+    plano: "free", // free | premium
+    iaUsoHoje: 0,
+    ultimoUso: new Date().toDateString()
+  };
+}
+
+function carregarUser() {
+  let user = JSON.parse(localStorage.getItem(userKey)) || userInicial();
+
+  // reset diário simples
+  if (user.ultimoUso !== new Date().toDateString()) {
+    user.iaUsoHoje = 0;
+    user.ultimoUso = new Date().toDateString();
+    salvarUser(user);
+  }
+
+  return user;
+}
+
+function salvarUser(u) {
+  localStorage.setItem(userKey, JSON.stringify(u));
+}
+
+function podeUsarIA(user) {
+  if (user.plano === "premium") return true;
+
+  if (user.iaUsoHoje < 3) {
+    user.iaUsoHoje++;
+    salvarUser(user);
+    return true;
+  }
+
+  return false;
+}
+
+// ==========================
 // VIDA DO USUÁRIO
 // ==========================
 const vidaKey = "orion_vida";
@@ -61,7 +103,7 @@ function salvarVida(v) {
 }
 
 // ==========================
-// HISTÓRICO POR TEMA (NOVO)
+// HISTÓRICO POR TEMA
 // ==========================
 function mostrarHistorico(tema) {
   const vida = carregarVida();
@@ -144,9 +186,22 @@ function salvarEstado(e) {
 }
 
 // ==========================
-// MOTOR DO ORION
+// RESPOSTAS (ABSTRAÇÃO)
 // ==========================
-function responder(textoUsuario) {
+function gerarResposta(textoUsuario) {
+  const user = carregarUser();
+
+  if (podeUsarIA(user)) {
+    return respostaComIA(textoUsuario);
+  }
+
+  return respostaLocal(textoUsuario);
+}
+
+// ==========================
+// MOTOR LOCAL (ATUAL)
+// ==========================
+function respostaLocal(textoUsuario) {
   let estado = carregarEstado();
   let vida = carregarVida();
   let resposta = "";
@@ -193,6 +248,13 @@ function responder(textoUsuario) {
 }
 
 // ==========================
+// STUB DE IA (FUTURA)
+// ==========================
+function respostaComIA(textoUsuario) {
+  return "Estou refletindo sobre isso com você. Me conte um pouco mais.";
+}
+
+// ==========================
 // RECONHECIMENTO DE VOZ
 // ==========================
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -218,7 +280,7 @@ if (!SpeechRecognition) {
     const texto = event.results[0][0].transcript;
     registrar("Você", texto);
 
-    const resposta = responder(texto);
+    const resposta = gerarResposta(texto);
     registrar("Orion", resposta);
     falar(resposta);
 
