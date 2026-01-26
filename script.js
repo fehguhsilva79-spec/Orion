@@ -18,8 +18,6 @@ function falar(texto) {
   const u = new SpeechSynthesisUtterance(texto);
   u.lang = "pt-BR";
   u.rate = 0.95;
-  u.pitch = 1;
-  u.volume = 1;
 
   const br = speechSynthesis.getVoices().find(v => v.lang === "pt-BR");
   if (br) u.voice = br;
@@ -27,26 +25,34 @@ function falar(texto) {
   speechSynthesis.speak(u);
 }
 
-stopBtn.addEventListener("click", () => {
+stopBtn.onclick = () => {
   speechSynthesis.cancel();
   status.innerText = "Orion em silêncio. Presente.";
-});
+};
 
 // ==========================
-// ESTRUTURA DE VIDA DO USUÁRIO
+// VIDA DO USUÁRIO (MEMÓRIA REAL)
 // ==========================
 const vidaKey = "orion_vida";
 
 function vidaInicial() {
   return {
-    assuntos: [], // registros organizados
-    assuntoAtual: null
+    temas: {
+      emocional: [],
+      financeiro: [],
+      trabalho: [],
+      relacionamento: [],
+      saude: [],
+      decisoes: [],
+      ideias: [],
+      geral: []
+    },
+    temaAtual: null
   };
 }
 
 function carregarVida() {
-  const v = localStorage.getItem(vidaKey);
-  return v ? JSON.parse(v) : vidaInicial();
+  return JSON.parse(localStorage.getItem(vidaKey)) || vidaInicial();
 }
 
 function salvarVida(v) {
@@ -63,27 +69,29 @@ function registrar(autor, texto) {
 
 function detectarTema(texto) {
   texto = texto.toLowerCase();
-  if (/dinheiro|financeiro|conta|grana/.test(texto)) return "Financeiro";
-  if (/trabalho|emprego|empresa|chefe/.test(texto)) return "Trabalho";
-  if (/relacionamento|amor|casamento|família/.test(texto)) return "Relacionamentos";
-  if (/ansioso|triste|cansado|medo|perdido/.test(texto)) return "Emocional";
-  return "Geral";
+
+  if (/dinheiro|financeiro|conta|grana/.test(texto)) return "financeiro";
+  if (/trabalho|emprego|empresa|chefe/.test(texto)) return "trabalho";
+  if (/relacionamento|amor|casamento|família/.test(texto)) return "relacionamento";
+  if (/ansioso|triste|cansado|medo|perdido/.test(texto)) return "emocional";
+  if (/saúde|doente|corpo|mente/.test(texto)) return "saude";
+  if (/decisão|escolha|dúvida/.test(texto)) return "decisoes";
+  if (/ideia|projeto|criar/.test(texto)) return "ideias";
+
+  return "geral";
 }
 
 // ==========================
-// ESTADO DO CICLO DE CONVERSA
+// ESTADO DE CONVERSA
 // ==========================
 const estadoKey = "orion_estado";
 
 function estadoInicial() {
-  return {
-    fase: 1
-  };
+  return { fase: 1 };
 }
 
 function carregarEstado() {
-  const e = localStorage.getItem(estadoKey);
-  return e ? JSON.parse(e) : estadoInicial();
+  return JSON.parse(localStorage.getItem(estadoKey)) || estadoInicial();
 }
 
 function salvarEstado(e) {
@@ -91,7 +99,7 @@ function salvarEstado(e) {
 }
 
 // ==========================
-// MOTOR DE CONVERSA + ORGANIZAÇÃO
+// MOTOR DO ORION
 // ==========================
 function responder(textoUsuario) {
   let estado = carregarEstado();
@@ -103,30 +111,24 @@ function responder(textoUsuario) {
   // ======================
   if (estado.fase === 1) {
     resposta =
-      "Estou com você. " +
-      "Quer continuar algo que já falamos antes ou começar um assunto novo?";
+      "Estou aqui com você. " +
+      "Quer continuar algo que já estava pensando ou começar um assunto novo?";
 
     estado.fase = 2;
   }
 
   // ======================
-  // FASE 2 — DEFINIR ASSUNTO
+  // FASE 2 — DEFINIR TEMA
   // ======================
   else if (estado.fase === 2) {
     const tema = detectarTema(textoUsuario);
+    vida.temaAtual = tema;
 
-    const novoAssunto = {
-      tema,
-      data: new Date().toISOString(),
-      conversas: []
-    };
+    const jaExiste = vida.temas[tema].length > 0;
 
-    vida.assuntos.push(novoAssunto);
-    vida.assuntoAtual = vida.assuntos.length - 1;
-
-    resposta =
-      `Vamos organizar isso como um assunto sobre ${tema}. ` +
-      "O que exatamente está pesando nisso hoje?";
+    resposta = jaExiste
+      ? `Isso toca algo que você já trouxe antes sobre ${tema}. O que está diferente agora?`
+      : `Vamos organizar isso como algo ligado a ${tema}. O que mais pesa nisso hoje?`;
 
     estado.fase = 3;
   }
@@ -136,8 +138,8 @@ function responder(textoUsuario) {
   // ======================
   else if (estado.fase === 3) {
     resposta =
-      "Vamos separar as coisas com calma. " +
-      "O que nessa situação está sob o seu controle agora?";
+      "Vamos separar isso com calma. " +
+      "O que nessa situação depende de você — e o que não depende?";
 
     estado.fase = 4;
   }
@@ -147,9 +149,9 @@ function responder(textoUsuario) {
   // ======================
   else if (estado.fase === 4) {
     resposta =
-      "Existem caminhos possíveis aqui. " +
+      "Existem alguns caminhos aqui. " +
       "Agir agora, esperar um pouco ou mudar o foco. " +
-      "Qual deles parece mais honesto com você hoje?";
+      "Qual deles faz mais sentido para você hoje?";
 
     estado.fase = 5;
   }
@@ -159,21 +161,22 @@ function responder(textoUsuario) {
   // ======================
   else {
     resposta =
-      "Não precisa resolver tudo agora. " +
-      "Esse assunto ficará guardado, e podemos continuar quando quiser.";
+      "Isso ficará guardado. " +
+      "Você não precisa resolver tudo agora. " +
+      "Quando quiser continuar, eu estarei aqui.";
 
     estado = estadoInicial();
-    vida.assuntoAtual = null;
+    vida.temaAtual = null;
   }
 
   // ======================
-  // SALVAR CONVERSA NO ASSUNTO
+  // REGISTRO NA VIDA
   // ======================
-  if (vida.assuntoAtual !== null) {
-    vida.assuntos[vida.assuntoAtual].conversas.push(
-      { autor: "Você", texto: textoUsuario },
-      { autor: "Orion", texto: resposta }
-    );
+  if (vida.temaAtual) {
+    vida.temas[vida.temaAtual].push({
+      texto: textoUsuario,
+      data: new Date().toISOString()
+    });
   }
 
   salvarVida(vida);
@@ -194,12 +197,12 @@ if (!SpeechRecognition) {
   recognition.interimResults = false;
   recognition.continuous = false;
 
-  micBtn.addEventListener("click", () => {
+  micBtn.onclick = () => {
     if (ouvindo) return;
     ouvindo = true;
     status.innerText = "Orion está ouvindo...";
     recognition.start();
-  });
+  };
 
   recognition.onresult = (event) => {
     ouvindo = false;
@@ -210,12 +213,12 @@ if (!SpeechRecognition) {
     registrar("Orion", resposta);
 
     falar(resposta);
-    status.innerText = "Orion segue com você.";
+    status.innerText = "Orion permanece com você.";
   };
 
   recognition.onerror = () => {
     ouvindo = false;
-    status.innerText = "Não consegui ouvir. Tente novamente quando quiser.";
+    status.innerText = "Não consegui ouvir.";
   };
 
   recognition.onend = () => {
