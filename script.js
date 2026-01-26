@@ -5,11 +5,12 @@ const micBtn = document.getElementById("mic-btn");
 const stopBtn = document.getElementById("stop-btn");
 const status = document.getElementById("status");
 const output = document.getElementById("output");
+const temasBtns = document.querySelectorAll("[data-tema]");
 
 let ouvindo = false;
 
 // ==========================
-// VOZ
+// VOZ (FALA)
 // ==========================
 function falar(texto) {
   if (!("speechSynthesis" in window)) return;
@@ -19,8 +20,11 @@ function falar(texto) {
   u.lang = "pt-BR";
   u.rate = 0.95;
 
-  const br = speechSynthesis.getVoices().find(v => v.lang === "pt-BR");
-  if (br) u.voice = br;
+  const vozBR = speechSynthesis
+    .getVoices()
+    .find(v => v.lang === "pt-BR");
+
+  if (vozBR) u.voice = vozBR;
 
   speechSynthesis.speak(u);
 }
@@ -58,6 +62,25 @@ function carregarVida() {
 function salvarVida(v) {
   localStorage.setItem(vidaKey, JSON.stringify(v));
 }
+
+// ==========================
+// INTERFACE → TEMA
+// ==========================
+temasBtns.forEach(btn => {
+  btn.onclick = () => {
+    const vida = carregarVida();
+
+    temasBtns.forEach(b => b.classList.remove("ativo"));
+    btn.classList.add("ativo");
+
+    vida.temaAtual = btn.dataset.tema;
+    salvarVida(vida);
+
+    const msg = `Vamos falar sobre ${vida.temaAtual}. O que está acontecendo agora?`;
+    registrar("Orion", msg);
+    falar(msg);
+  };
+});
 
 // ==========================
 // UTILIDADES
@@ -106,72 +129,52 @@ function responder(textoUsuario) {
   let vida = carregarVida();
   let resposta = "";
 
-  // ======================
+  if (!vida.temaAtual) {
+    vida.temaAtual = detectarTema(textoUsuario);
+  }
+
   // FASE 1 — ACOLHIMENTO
-  // ======================
   if (estado.fase === 1) {
     resposta =
-      "Estou aqui com você. " +
-      "Quer continuar algo que já estava pensando ou começar um assunto novo?";
-
+      "Estou aqui com você. Quer continuar algo que já estava pensando ou começar algo novo?";
     estado.fase = 2;
   }
 
-  // ======================
-  // FASE 2 — DEFINIR TEMA
-  // ======================
+  // FASE 2 — TEMA
   else if (estado.fase === 2) {
-    const tema = detectarTema(textoUsuario);
-    vida.temaAtual = tema;
-
-    const jaExiste = vida.temas[tema].length > 0;
+    const jaExiste = vida.temas[vida.temaAtual].length > 0;
 
     resposta = jaExiste
-      ? `Isso toca algo que você já trouxe antes sobre ${tema}. O que está diferente agora?`
-      : `Vamos organizar isso como algo ligado a ${tema}. O que mais pesa nisso hoje?`;
+      ? `Você já falou antes sobre ${vida.temaAtual}. O que mudou desde então?`
+      : `Vamos organizar isso dentro de ${vida.temaAtual}. O que mais pesa agora?`;
 
     estado.fase = 3;
   }
 
-  // ======================
   // FASE 3 — CLAREZA
-  // ======================
   else if (estado.fase === 3) {
     resposta =
-      "Vamos separar isso com calma. " +
-      "O que nessa situação depende de você — e o que não depende?";
-
+      "Vamos com calma. O que depende de você nessa situação — e o que não depende?";
     estado.fase = 4;
   }
 
-  // ======================
   // FASE 4 — CAMINHOS
-  // ======================
   else if (estado.fase === 4) {
     resposta =
-      "Existem alguns caminhos aqui. " +
-      "Agir agora, esperar um pouco ou mudar o foco. " +
-      "Qual deles faz mais sentido para você hoje?";
-
+      "Vejo três caminhos possíveis: agir agora, esperar ou mudar o foco. Qual parece mais viável hoje?";
     estado.fase = 5;
   }
 
-  // ======================
   // FASE 5 — FECHAMENTO
-  // ======================
   else {
     resposta =
-      "Isso ficará guardado. " +
-      "Você não precisa resolver tudo agora. " +
-      "Quando quiser continuar, eu estarei aqui.";
+      "Isso fica guardado aqui. Você não precisa resolver tudo agora. Quando quiser continuar, estarei presente.";
 
     estado = estadoInicial();
     vida.temaAtual = null;
+    temasBtns.forEach(b => b.classList.remove("ativo"));
   }
 
-  // ======================
-  // REGISTRO NA VIDA
-  // ======================
   if (vida.temaAtual) {
     vida.temas[vida.temaAtual].push({
       texto: textoUsuario,
@@ -187,7 +190,8 @@ function responder(textoUsuario) {
 // ==========================
 // RECONHECIMENTO DE VOZ
 // ==========================
-const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+const SpeechRecognition =
+  window.SpeechRecognition || window.webkitSpeechRecognition;
 
 if (!SpeechRecognition) {
   status.innerText = "Reconhecimento de voz não suportado.";
@@ -199,6 +203,7 @@ if (!SpeechRecognition) {
 
   micBtn.onclick = () => {
     if (ouvindo) return;
+
     ouvindo = true;
     status.innerText = "Orion está ouvindo...";
     recognition.start();
@@ -206,13 +211,14 @@ if (!SpeechRecognition) {
 
   recognition.onresult = (event) => {
     ouvindo = false;
-    const texto = event.results[0][0].transcript;
 
+    const texto = event.results[0][0].transcript;
     registrar("Você", texto);
+
     const resposta = responder(texto);
     registrar("Orion", resposta);
-
     falar(resposta);
+
     status.innerText = "Orion permanece com você.";
   };
 
