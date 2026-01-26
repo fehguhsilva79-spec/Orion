@@ -9,52 +9,173 @@
 }
 
 /* ==========================
-   CORPO E ATMOSFERA
+   CORPO
 ========================== */
 body {
-  background: radial-gradient(circle at top, #1e3c72, #0f1c2e);
-  color: #ffffff;
+  background: #0f172a;
+  color: #e5e7eb;
   height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
   overflow: hidden;
 }
 
 /* ==========================
-   CONTAINER PRINCIPAL
+   LAYOUT PRINCIPAL
+========================== */
+.layout {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+}
+
+/* ==========================
+   SIDEBAR (ESTILO GPT)
+========================== */
+.sidebar {
+  width: 260px;
+  background: #020617;
+  border-right: 1px solid rgba(255,255,255,0.05);
+  display: flex;
+  flex-direction: column;
+  padding: 20px 14px;
+}
+
+/* PERFIL */
+.perfil {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+.avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #facc15;
+  color: #000;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nome {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+/* TEMAS */
+.temas {
+  margin-top: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.temas button {
+  background: transparent;
+  border: none;
+  color: #cbd5f5;
+  text-align: left;
+  padding: 10px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  font-size: 0.9rem;
+}
+
+.temas button:hover {
+  background: rgba(255,255,255,0.06);
+}
+
+.temas button.active {
+  background: rgba(250,204,21,0.15);
+  color: #facc15;
+}
+
+/* RODAPÉ */
+.rodape {
+  margin-top: auto;
+  text-align: center;
+  font-size: 0.75rem;
+  opacity: 0.4;
+}
+
+/* ==========================
+   ÁREA PRINCIPAL (CHAT)
 ========================== */
 .app {
-  background: rgba(0, 0, 0, 0.68);
-  backdrop-filter: blur(6px);
-  padding: 36px 40px;
-  border-radius: 28px;
-  width: 92%;
-  max-width: 560px;
-  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.65);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: #020617;
+}
+
+/* TOPO */
+.topo {
+  padding: 18px 24px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+.topo h1 {
+  font-size: 1.4rem;
+  color: #facc15;
+}
+
+.subtitle {
+  font-size: 0.85rem;
+  opacity: 0.7;
+}
+
+/* ==========================
+   CONVERSA
+========================== */
+.conversa {
+  flex: 1;
+  padding: 24px;
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
 
-/* ==========================
-   IDENTIDADE
-========================== */
-.app h1 {
-  font-size: 2.6rem;
-  text-align: center;
-  color: #ffcc00;
-  letter-spacing: 1px;
-  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.6);
+.conversa::-webkit-scrollbar {
+  width: 6px;
 }
 
-.subtitle {
-  text-align: center;
-  font-size: 1.05rem;
-  font-style: italic;
-  color: #e0e0e0;
-  opacity: 0.9;
-  margin-bottom: 10px;
+.conversa::-webkit-scrollbar-thumb {
+  background: rgba(250,204,21,0.4);
+  border-radius: 4px;
+}
+
+/* MENSAGENS */
+.mensagem {
+  max-width: 75%;
+  padding: 12px 16px;
+  border-radius: 14px;
+  line-height: 1.5;
+  font-size: 0.95rem;
+}
+
+.usuario {
+  align-self: flex-end;
+  background: #1e293b;
+}
+
+.orion {
+  align-self: flex-start;
+  background: #020617;
+  border: 1px solid rgba(255,255,255,0.08);
+}
+
+/* ==========================
+   STATUS
+========================== */
+.status {
+  padding: 8px 24px;
+  font-size: 0.8rem;
+  opacity: 0.6;
 }
 
 /* ==========================
@@ -62,159 +183,48 @@ body {
 ========================== */
 .controls {
   display: flex;
-  justify-content: center;
   gap: 12px;
-  flex-wrap: wrap;
+  padding: 16px 24px;
+  border-top: 1px solid rgba(255,255,255,0.06);
 }
 
-button {
-  background: linear-gradient(135deg, #ffcc00, #e6b800);
+.controls button {
+  flex: 1;
+  background: #facc15;
   color: #000;
   border: none;
-  padding: 13px 26px;
-  border-radius: 18px;
-  font-size: 0.95rem;
+  padding: 12px;
+  border-radius: 10px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.25s ease;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
+  transition: transform 0.15s ease, opacity 0.15s ease;
 }
 
-button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.45);
+.controls button:hover {
+  opacity: 0.9;
 }
 
-button:active {
+.controls button:active {
   transform: scale(0.97);
 }
 
 /* ==========================
-   STATUS DO ORION
+   RESPONSIVO (MOBILE)
 ========================== */
-#status {
-  margin: 10px 0;
-  font-size: 0.95rem;
-  font-style: italic;
-  color: #d0d0d0;
-  text-align: center;
-  min-height: 22px;
-  opacity: 0.85;
-}
-
-/* ==========================
-   ÁREA DE CONVERSA
-========================== */
-#output {
-  background: rgba(255, 255, 255, 0.06);
-  border-radius: 22px;
-  padding: 18px;
-  max-height: 260px;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  font-size: 0.95rem;
-  line-height: 1.55;
-}
-
-/* SCROLL */
-#output::-webkit-scrollbar {
-  width: 6px;
-}
-
-#output::-webkit-scrollbar-thumb {
-  background: rgba(255, 204, 0, 0.45);
-  border-radius: 3px;
-}
-
-/* ==========================
-   MENSAGENS
-========================== */
-#output strong {
-  color: #ffcc00;
-}
-
-/* ==========================
-   SEÇÃO DE TEMAS
-========================== */
-.themes {
-  margin-top: 18px;
-  padding-top: 14px;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.themes h2 {
-  font-size: 1rem;
-  text-align: center;
-  margin-bottom: 12px;
-  font-weight: 500;
-  color: #f0f0f0;
-  opacity: 0.9;
-}
-
-/* GRID DE TEMAS */
-.theme-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
-}
-
-/* CARD DE TEMA */
-.theme-card {
-  background: rgba(255, 255, 255, 0.08);
-  border-radius: 18px;
-  padding: 14px;
-  text-align: center;
-  font-size: 0.9rem;
-  cursor: pointer;
-  transition: all 0.25s ease;
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  user-select: none;
-}
-
-.theme-card:hover {
-  background: rgba(255, 204, 0, 0.18);
-  border-color: rgba(255, 204, 0, 0.35);
-  transform: translateY(-2px);
-}
-
-.theme-card:active {
-  transform: scale(0.96);
-}
-
-/* ==========================
-   ESTADOS FUTUROS (PRONTOS)
-========================== */
-.app.ouvindo {
-  box-shadow: 0 0 0 2px rgba(255, 204, 0, 0.4);
-}
-
-.app.refletindo {
-  opacity: 0.97;
-}
-
-/* ==========================
-   RESPONSIVIDADE
-========================== */
-@media (max-width: 600px) {
-  .app {
-    padding: 26px 22px;
+@media (max-width: 768px) {
+  .sidebar {
+    display: none;
   }
 
-  .app h1 {
-    font-size: 2.2rem;
+  .layout {
+    flex-direction: column;
   }
 
-  button {
-    width: 100%;
+  .controls {
+    flex-direction: column;
   }
 
-  #output {
-    max-height: 220px;
-  }
-
-  .theme-grid {
-    grid-template-columns: 1fr;
+  .mensagem {
+    max-width: 90%;
   }
 }
