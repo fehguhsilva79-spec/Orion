@@ -20,10 +20,7 @@ function falar(texto) {
   u.lang = "pt-BR";
   u.rate = 0.95;
 
-  const vozBR = speechSynthesis
-    .getVoices()
-    .find(v => v.lang === "pt-BR");
-
+  const vozBR = speechSynthesis.getVoices().find(v => v.lang === "pt-BR");
   if (vozBR) u.voice = vozBR;
 
   speechSynthesis.speak(u);
@@ -35,7 +32,7 @@ stopBtn.onclick = () => {
 };
 
 // ==========================
-// VIDA DO USUÁRIO (MEMÓRIA REAL)
+// VIDA DO USUÁRIO
 // ==========================
 const vidaKey = "orion_vida";
 
@@ -64,6 +61,33 @@ function salvarVida(v) {
 }
 
 // ==========================
+// HISTÓRICO POR TEMA (NOVO)
+// ==========================
+function mostrarHistorico(tema) {
+  const vida = carregarVida();
+  output.innerHTML = "";
+
+  registrar("Orion", `Tema: ${tema}`);
+
+  const historico = vida.temas[tema];
+
+  if (!historico || historico.length === 0) {
+    const msg = "Ainda não há nada registrado aqui. Podemos começar agora.";
+    registrar("Orion", msg);
+    falar(msg);
+    return;
+  }
+
+  historico.forEach(reg => {
+    registrar("Você", reg.texto);
+  });
+
+  const msg = "Esse é o caminho que você já percorreu aqui. O que mudou desde a última vez?";
+  registrar("Orion", msg);
+  falar(msg);
+}
+
+// ==========================
 // INTERFACE → TEMA
 // ==========================
 temasBtns.forEach(btn => {
@@ -76,9 +100,7 @@ temasBtns.forEach(btn => {
     vida.temaAtual = btn.dataset.tema;
     salvarVida(vida);
 
-    const msg = `Vamos falar sobre ${vida.temaAtual}. O que está acontecendo agora?`;
-    registrar("Orion", msg);
-    falar(msg);
+    mostrarHistorico(vida.temaAtual);
   };
 });
 
@@ -133,15 +155,10 @@ function responder(textoUsuario) {
     vida.temaAtual = detectarTema(textoUsuario);
   }
 
-  // FASE 1 — ACOLHIMENTO
   if (estado.fase === 1) {
-    resposta =
-      "Estou aqui com você. Quer continuar algo que já estava pensando ou começar algo novo?";
+    resposta = "Estou aqui com você. Quer continuar algo que já estava pensando ou começar algo novo?";
     estado.fase = 2;
-  }
-
-  // FASE 2 — TEMA
-  else if (estado.fase === 2) {
+  } else if (estado.fase === 2) {
     const jaExiste = vida.temas[vida.temaAtual].length > 0;
 
     resposta = jaExiste
@@ -149,26 +166,14 @@ function responder(textoUsuario) {
       : `Vamos organizar isso dentro de ${vida.temaAtual}. O que mais pesa agora?`;
 
     estado.fase = 3;
-  }
-
-  // FASE 3 — CLAREZA
-  else if (estado.fase === 3) {
-    resposta =
-      "Vamos com calma. O que depende de você nessa situação — e o que não depende?";
+  } else if (estado.fase === 3) {
+    resposta = "O que nessa situação depende de você — e o que não depende?";
     estado.fase = 4;
-  }
-
-  // FASE 4 — CAMINHOS
-  else if (estado.fase === 4) {
-    resposta =
-      "Vejo três caminhos possíveis: agir agora, esperar ou mudar o foco. Qual parece mais viável hoje?";
+  } else if (estado.fase === 4) {
+    resposta = "Agir agora, esperar ou mudar o foco. Qual faz mais sentido hoje?";
     estado.fase = 5;
-  }
-
-  // FASE 5 — FECHAMENTO
-  else {
-    resposta =
-      "Isso fica guardado aqui. Você não precisa resolver tudo agora. Quando quiser continuar, estarei presente.";
+  } else {
+    resposta = "Isso fica guardado. Quando quiser continuar, estarei aqui.";
 
     estado = estadoInicial();
     vida.temaAtual = null;
@@ -190,8 +195,7 @@ function responder(textoUsuario) {
 // ==========================
 // RECONHECIMENTO DE VOZ
 // ==========================
-const SpeechRecognition =
-  window.SpeechRecognition || window.webkitSpeechRecognition;
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
 if (!SpeechRecognition) {
   status.innerText = "Reconhecimento de voz não suportado.";
@@ -203,7 +207,6 @@ if (!SpeechRecognition) {
 
   micBtn.onclick = () => {
     if (ouvindo) return;
-
     ouvindo = true;
     status.innerText = "Orion está ouvindo...";
     recognition.start();
