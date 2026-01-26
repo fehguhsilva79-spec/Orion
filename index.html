@@ -6,6 +6,7 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+
   <div class="app">
     <h1>Orion</h1>
     <p class="subtitle">Clareza antes da decisão.</p>
@@ -16,7 +17,21 @@
     </div>
 
     <div id="status">Orion em repouso.</div>
+
     <div id="output"></div>
+
+    <!-- INTERFACE DE TEMAS -->
+    <div class="themes">
+      <h2>Como o Orion pode te ajudar agora?</h2>
+
+      <div class="theme-grid">
+        <div class="theme-card" data-theme="emocional">Emoções</div>
+        <div class="theme-card" data-theme="decisao">Decisão</div>
+        <div class="theme-card" data-theme="financeiro">Financeiro</div>
+        <div class="theme-card" data-theme="organizacao">Organização</div>
+        <div class="theme-card" data-theme="reflexao">Reflexão</div>
+      </div>
+    </div>
   </div>
 
 <script>
@@ -27,6 +42,7 @@ const micBtn = document.getElementById("mic-btn");
 const stopBtn = document.getElementById("stop-btn");
 const statusEl = document.getElementById("status");
 const output = document.getElementById("output");
+const themeCards = document.querySelectorAll(".theme-card");
 
 let isListening = false;
 let isSpeaking = false;
@@ -57,7 +73,7 @@ function falar(texto) {
 
 stopBtn.onclick = () => {
   speechSynthesis.cancel();
-  recognition.abort();
+  if (recognition) recognition.abort();
   isListening = false;
   isSpeaking = false;
   statusEl.innerText = "Interrompido.";
@@ -139,45 +155,60 @@ function gerarResposta(texto) {
 const SpeechRecognition =
   window.SpeechRecognition || window.webkitSpeechRecognition;
 
+let recognition = null;
+
 if (!SpeechRecognition) {
   statusEl.innerText = "Reconhecimento de voz não suportado.";
+} else {
+  recognition = new SpeechRecognition();
+  recognition.lang = "pt-BR";
+  recognition.continuous = false;
+  recognition.interimResults = false;
+
+  micBtn.onclick = () => {
+    if (isListening || isSpeaking) return;
+
+    recognition.abort();
+    recognition.start();
+
+    isListening = true;
+    statusEl.innerText = "Orion ouvindo...";
+  };
+
+  recognition.onresult = (event) => {
+    const texto = event.results[0][0].transcript;
+
+    output.innerHTML += `<strong>Você:</strong> ${texto}<br>`;
+
+    const resposta = gerarResposta(texto);
+    output.innerHTML += `<strong>Orion:</strong> ${resposta}<br><br>`;
+
+    falar(resposta);
+    isListening = false;
+  };
+
+  recognition.onerror = () => {
+    statusEl.innerText = "Erro ao ouvir.";
+    isListening = false;
+  };
+
+  recognition.onend = () => {
+    isListening = false;
+  };
 }
 
-const recognition = new SpeechRecognition();
-recognition.lang = "pt-BR";
-recognition.continuous = false;
-recognition.interimResults = false;
+/* =========================
+   CLIQUE NOS TEMAS (PREPARADO)
+========================= */
+themeCards.forEach(card => {
+  card.addEventListener("click", () => {
+    const tema = card.dataset.theme;
 
-micBtn.onclick = () => {
-  if (isListening || isSpeaking) return;
-
-  recognition.abort(); // evita erro de múltiplos starts
-  recognition.start();
-
-  isListening = true;
-  statusEl.innerText = "Orion ouvindo...";
-};
-
-recognition.onresult = (event) => {
-  const texto = event.results[0][0].transcript;
-
-  output.innerHTML += `<strong>Você:</strong> ${texto}<br>`;
-
-  const resposta = gerarResposta(texto);
-  output.innerHTML += `<strong>Orion:</strong> ${resposta}<br><br>`;
-
-  falar(resposta);
-  isListening = false;
-};
-
-recognition.onerror = () => {
-  statusEl.innerText = "Erro ao ouvir.";
-  isListening = false;
-};
-
-recognition.onend = () => {
-  isListening = false;
-};
+    output.innerHTML += `<strong>Orion:</strong> Vamos falar sobre ${card.innerText.toLowerCase()}. Pode começar.<br><br>`;
+    falar(`Vamos falar sobre ${card.innerText}. Pode começar.`);
+  });
+});
 </script>
+
 </body>
 </html>
