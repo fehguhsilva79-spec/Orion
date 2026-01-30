@@ -5,7 +5,6 @@ const micBtn = document.getElementById("mic-btn");
 const stopBtn = document.getElementById("stop-btn");
 const status = document.getElementById("status");
 const output = document.getElementById("output");
-const temasBtns = document.querySelectorAll("[data-tema]");
 
 let ouvindo = false;
 
@@ -49,7 +48,8 @@ function vidaInicial() {
       geral: []
     },
     lembretes: [],
-    temaAtual: null
+    temaAtual: null,
+    aguardandoConfirmacao: null
   };
 }
 
@@ -68,6 +68,8 @@ function detectarIntencao(texto) {
   texto = texto.toLowerCase();
   if (/lembra|não esquece|amanhã|mais tarde|daqui/.test(texto)) return "lembrete";
   if (/importante|guarda isso/.test(texto)) return "importante";
+  if (/sim|pode|claro/.test(texto)) return "confirmar";
+  if (/não|deixa|esquece/.test(texto)) return "negar";
   return "conversa";
 }
 
@@ -95,28 +97,25 @@ function registrar(autor, texto) {
 }
 
 // ==========================
-// LEMBRETES AUTOMÁTICOS
+// LEMBRETES
 // ==========================
 function verificarLembretes() {
   const vida = carregarVida();
   const agora = new Date();
 
-  const pendentes = vida.lembretes.filter(l => !l.feito);
-
-  if (pendentes.length === 0) return;
-
-  const lembrete = pendentes[0];
-  lembrete.feito = true;
+  vida.lembretes.forEach(l => {
+    if (!l.feito && new Date(l.quando) <= agora) {
+      l.feito = true;
+      const msg = `Antes de continuarmos… você me pediu pra te lembrar disso: ${l.texto}`;
+      registrar("Orion", msg);
+      falar(msg);
+    }
+  });
 
   salvarVida(vida);
-
-  const msg = `Antes de continuarmos… você me pediu pra te lembrar disso: ${lembrete.texto}`;
-  registrar("Orion", msg);
-  falar(msg);
 }
 
-// roda ao abrir o app
-setTimeout(verificarLembretes, 2000);
+setInterval(verificarLembretes, 60000);
 
 // ==========================
 // ESTADO
@@ -141,28 +140,58 @@ function salvarEstado(e) {
 function gerarResposta(textoUsuario) {
   let vida = carregarVida();
   let estado = carregarEstado();
-  let resposta = "";
 
   const intencao = detectarIntencao(textoUsuario);
+  const novoTema = detectarTema(textoUsuario);
 
-  if (!vida.temaAtual) vida.temaAtual = detectarTema(textoUsuario);
+  // troca de tema se necessário
+  if (novoTema !== vida.temaAtual) {
+    vida.temaAtual = novoTema;
+  }
+
+  // confirmação pendente
+  if (vida.aguardandoConfirmacao) {
+    if (intencao === "confirmar") {
+      vida.lembretes.push({
+        texto: vida.aguardandoConfirmacao,
+        quando: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+        feito: false
+      });
+      vida.aguardandoConfirmacao = null;
+      salvarVida(vida);
+      return "Perfeito. Vou te lembrar no momento certo.";
+    }
+
+    if (intencao === "negar") {
+      vida.aguardandoConfirmacao = null;
+      salvarVida(vida);
+      return "Tudo bem. Guardei apenas como conversa.";
+    }
+  }
+
+  if (intencao === "importante") {
+    vida.aguardandoConfirmacao = textoUsuario;
+    salvarVida(vida);
+    return "Isso parece importante. Quer que eu te lembre disso depois?";
+  }
 
   if (intencao === "lembrete") {
     vida.lembretes.push({
       texto: textoUsuario,
-      data: new Date().toISOString(),
+      quando: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
       feito: false
     });
-
     salvarVida(vida);
-    return "Certo. Vou guardar isso e te lembrar depois.";
+    return "Certo. Vou te lembrar disso mais tarde.";
   }
+
+  let resposta = "";
 
   if (estado.fase === 1) {
     resposta = "Estou aqui com você. Quer continuar algo ou começar algo novo?";
     estado.fase = 2;
   } else if (estado.fase === 2) {
-    resposta = `Vamos falar sobre ${vida.temaAtual}. O que mais pesa agora?`;
+    resposta = `Vamos falar sobre isso. O que mais pesa agora?`;
     estado.fase = 3;
   } else if (estado.fase === 3) {
     resposta = "O que depende de você nisso — e o que não depende?";
