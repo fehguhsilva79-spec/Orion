@@ -10,6 +10,13 @@ let ouvindo = false;
 let falando = false;
 
 // ==========================
+// UTILITÁRIOS DE ESTADO
+// ==========================
+function podeOuvir() {
+  return !ouvindo && !falando && !speechSynthesis.speaking;
+}
+
+// ==========================
 // VOZ (SAÍDA)
 // ==========================
 function falar(texto) {
@@ -27,6 +34,7 @@ function falar(texto) {
 
   u.onend = () => {
     falando = false;
+    status.innerText = "Orion permanece com você.";
   };
 
   speechSynthesis.speak(u);
@@ -125,6 +133,18 @@ function responderPorModo(modo, textoBase) {
 }
 
 // ==========================
+// CONSCIÊNCIA MÍNIMA
+// ==========================
+function precisaIA(texto) {
+  const gatilhos = [
+    "sentindo", "confuso", "perdido",
+    "decidir", "vida", "medo",
+    "ansioso", "pensando"
+  ];
+  return gatilhos.some(g => texto.toLowerCase().includes(g));
+}
+
+// ==========================
 // HISTÓRICO
 // ==========================
 function registrar(autor, texto) {
@@ -154,7 +174,7 @@ function verificarLembretes() {
 setInterval(verificarLembretes, 60000);
 
 // ==========================
-// ESTADO
+// ESTADO DE DIÁLOGO
 // ==========================
 const estadoKey = "orion_estado";
 
@@ -178,11 +198,19 @@ function gerarResposta(textoUsuario) {
   let estado = carregarEstado();
 
   const intencao = detectarIntencao(textoUsuario);
-  const novoTema = detectarTema(textoUsuario);
-
-  vida.temaAtual = novoTema || "geral";
+  vida.temaAtual = detectarTema(textoUsuario);
   vida.modoAtual = definirModo(vida.temaAtual);
 
+  // Consciência mínima
+  if (precisaIA(textoUsuario)) {
+    salvarVida(vida);
+    return responderPorModo(
+      vida.modoAtual,
+      "Eu entendi o que você quis dizer. Me conta um pouco mais."
+    );
+  }
+
+  // Confirmações
   if (vida.aguardandoConfirmacao) {
     if (intencao === "confirmar") {
       vida.lembretes.push({
@@ -246,7 +274,7 @@ function gerarResposta(textoUsuario) {
 }
 
 // ==========================
-// VOZ INPUT (CORRIGIDO)
+// VOZ INPUT (ESTÁVEL)
 // ==========================
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
@@ -257,7 +285,7 @@ if (SpeechRecognition) {
   recognition.interimResults = false;
 
   micBtn.onclick = () => {
-    if (ouvindo || falando) return;
+    if (!podeOuvir()) return;
 
     try {
       ouvindo = true;
@@ -278,8 +306,6 @@ if (SpeechRecognition) {
     const resposta = gerarResposta(texto);
     registrar("Orion", resposta);
     falar(resposta);
-
-    status.innerText = "Orion permanece com você.";
   };
 
   recognition.onerror = () => {
@@ -290,5 +316,8 @@ if (SpeechRecognition) {
 
   recognition.onend = () => {
     ouvindo = false;
+    if (!falando) {
+      status.innerText = "Orion permanece com você.";
+    }
   };
 }
