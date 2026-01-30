@@ -49,6 +49,7 @@ function vidaInicial() {
     },
     lembretes: [],
     temaAtual: null,
+    modoAtual: "neutro",
     aguardandoConfirmacao: null
   };
 }
@@ -86,6 +87,29 @@ function detectarTema(texto) {
   if (/decisão|escolha|dúvida/.test(texto)) return "decisoes";
   if (/ideia|projeto|criar/.test(texto)) return "ideias";
   return "geral";
+}
+
+// ==========================
+// MODO DO ORION (OPÇÃO A)
+// ==========================
+function definirModo(tema) {
+  if (tema === "emocional" || tema === "relacionamento") return "acolhedor";
+  if (tema === "financeiro" || tema === "trabalho" || tema === "decisoes") return "pratico";
+  if (tema === "ideias") return "estimulante";
+  return "neutro";
+}
+
+// ==========================
+// RESPOSTA POR MODO
+// ==========================
+function responderPorModo(modo, textoBase) {
+  const respostas = {
+    acolhedor: `Estou com você nisso. ${textoBase}`,
+    pratico: `${textoBase} Vamos olhar isso com clareza.`,
+    estimulante: `${textoBase} Isso pode virar algo grande.`,
+    neutro: textoBase
+  };
+  return respostas[modo];
 }
 
 // ==========================
@@ -144,12 +168,12 @@ function gerarResposta(textoUsuario) {
   const intencao = detectarIntencao(textoUsuario);
   const novoTema = detectarTema(textoUsuario);
 
-  // troca de tema se necessário
   if (novoTema !== vida.temaAtual) {
     vida.temaAtual = novoTema;
+    vida.modoAtual = definirModo(novoTema);
   }
 
-  // confirmação pendente
+  // confirmação
   if (vida.aguardandoConfirmacao) {
     if (intencao === "confirmar") {
       vida.lembretes.push({
@@ -159,20 +183,20 @@ function gerarResposta(textoUsuario) {
       });
       vida.aguardandoConfirmacao = null;
       salvarVida(vida);
-      return "Perfeito. Vou te lembrar no momento certo.";
+      return responderPorModo(vida.modoAtual, "Perfeito. Vou cuidar disso.");
     }
 
     if (intencao === "negar") {
       vida.aguardandoConfirmacao = null;
       salvarVida(vida);
-      return "Tudo bem. Guardei apenas como conversa.";
+      return responderPorModo(vida.modoAtual, "Tudo bem. Seguimos.");
     }
   }
 
   if (intencao === "importante") {
     vida.aguardandoConfirmacao = textoUsuario;
     salvarVida(vida);
-    return "Isso parece importante. Quer que eu te lembre disso depois?";
+    return responderPorModo(vida.modoAtual, "Isso parece importante. Quer que eu te lembre depois?");
   }
 
   if (intencao === "lembrete") {
@@ -182,24 +206,25 @@ function gerarResposta(textoUsuario) {
       feito: false
     });
     salvarVida(vida);
-    return "Certo. Vou te lembrar disso mais tarde.";
+    return responderPorModo(vida.modoAtual, "Certo. Vou te lembrar disso.");
   }
 
-  let resposta = "";
+  let respostaBase = "";
 
   if (estado.fase === 1) {
-    resposta = "Estou aqui com você. Quer continuar algo ou começar algo novo?";
+    respostaBase = "Estou aqui. Quer continuar ou começar algo novo?";
     estado.fase = 2;
   } else if (estado.fase === 2) {
-    resposta = `Vamos falar sobre isso. O que mais pesa agora?`;
+    respostaBase = "O que mais pesa agora?";
     estado.fase = 3;
   } else if (estado.fase === 3) {
-    resposta = "O que depende de você nisso — e o que não depende?";
+    respostaBase = "O que depende de você nisso?";
     estado.fase = 4;
   } else {
-    resposta = "Isso fica guardado. Quando quiser continuar, estarei aqui.";
+    respostaBase = "Isso fica guardado. Estarei aqui.";
     estado = estadoInicial();
     vida.temaAtual = null;
+    vida.modoAtual = "neutro";
   }
 
   vida.temas[vida.temaAtual].push({
@@ -210,7 +235,23 @@ function gerarResposta(textoUsuario) {
   salvarVida(vida);
   salvarEstado(estado);
 
-  return resposta;
+  return responderPorModo(vida.modoAtual, respostaBase);
+}
+
+// ==========================
+// BASE PARA PAINEL DE ASSUNTOS (OPÇÃO B)
+// ==========================
+function listarAssuntos() {
+  const vida = carregarVida();
+  return Object.keys(vida.temas).map(t => ({
+    tema: t,
+    total: vida.temas[t].length
+  }));
+}
+
+function obterHistoricoPorTema(tema) {
+  const vida = carregarVida();
+  return vida.temas[tema] || [];
 }
 
 // ==========================
