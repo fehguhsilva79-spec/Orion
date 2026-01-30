@@ -7,14 +7,17 @@ const status = document.getElementById("status");
 const output = document.getElementById("output");
 
 let ouvindo = false;
+let falando = false;
 
 // ==========================
-// VOZ
+// VOZ (SAÍDA)
 // ==========================
 function falar(texto) {
   if (!("speechSynthesis" in window)) return;
 
+  falando = true;
   speechSynthesis.cancel();
+
   const u = new SpeechSynthesisUtterance(texto);
   u.lang = "pt-BR";
   u.rate = 0.95;
@@ -22,11 +25,16 @@ function falar(texto) {
   const vozBR = speechSynthesis.getVoices().find(v => v.lang === "pt-BR");
   if (vozBR) u.voice = vozBR;
 
+  u.onend = () => {
+    falando = false;
+  };
+
   speechSynthesis.speak(u);
 }
 
 stopBtn.onclick = () => {
   speechSynthesis.cancel();
+  falando = false;
   status.innerText = "Orion em silêncio. Presente.";
 };
 
@@ -48,7 +56,7 @@ function vidaInicial() {
       geral: []
     },
     lembretes: [],
-    temaAtual: null,
+    temaAtual: "geral",
     modoAtual: "neutro",
     aguardandoConfirmacao: null
   };
@@ -67,10 +75,12 @@ function salvarVida(v) {
 // ==========================
 function detectarIntencao(texto) {
   texto = texto.toLowerCase();
-  if (/lembra|não esquece|amanhã|mais tarde|daqui/.test(texto)) return "lembrete";
-  if (/importante|guarda isso/.test(texto)) return "importante";
-  if (/sim|pode|claro/.test(texto)) return "confirmar";
-  if (/não|deixa|esquece/.test(texto)) return "negar";
+
+  if (/\b(lembra|não esquece|amanhã|mais tarde|daqui)\b/.test(texto)) return "lembrete";
+  if (/\b(importante|guarda isso)\b/.test(texto)) return "importante";
+  if (/^(sim|pode|claro|ok)$/.test(texto.trim())) return "confirmar";
+  if (/^(não|deixa|esquece)$/.test(texto.trim())) return "negar";
+
   return "conversa";
 }
 
@@ -79,6 +89,7 @@ function detectarIntencao(texto) {
 // ==========================
 function detectarTema(texto) {
   texto = texto.toLowerCase();
+
   if (/dinheiro|financeiro|conta|grana/.test(texto)) return "financeiro";
   if (/trabalho|emprego|empresa|chefe/.test(texto)) return "trabalho";
   if (/relacionamento|amor|casamento|família/.test(texto)) return "relacionamento";
@@ -86,11 +97,12 @@ function detectarTema(texto) {
   if (/saúde|doente|corpo|mente/.test(texto)) return "saude";
   if (/decisão|escolha|dúvida/.test(texto)) return "decisoes";
   if (/ideia|projeto|criar/.test(texto)) return "ideias";
+
   return "geral";
 }
 
 // ==========================
-// MODO DO ORION (OPÇÃO A)
+// MODO DO ORION
 // ==========================
 function definirModo(tema) {
   if (tema === "emocional" || tema === "relacionamento") return "acolhedor";
@@ -109,7 +121,7 @@ function responderPorModo(modo, textoBase) {
     estimulante: `${textoBase} Isso pode virar algo grande.`,
     neutro: textoBase
   };
-  return respostas[modo];
+  return respostas[modo] || textoBase;
 }
 
 // ==========================
@@ -162,18 +174,15 @@ function salvarEstado(e) {
 // MOTOR PRINCIPAL
 // ==========================
 function gerarResposta(textoUsuario) {
-  let vida = carregarVida();
+  const vida = carregarVida();
   let estado = carregarEstado();
 
   const intencao = detectarIntencao(textoUsuario);
   const novoTema = detectarTema(textoUsuario);
 
-  if (novoTema !== vida.temaAtual) {
-    vida.temaAtual = novoTema;
-    vida.modoAtual = definirModo(novoTema);
-  }
+  vida.temaAtual = novoTema || "geral";
+  vida.modoAtual = definirModo(vida.temaAtual);
 
-  // confirmação
   if (vida.aguardandoConfirmacao) {
     if (intencao === "confirmar") {
       vida.lembretes.push({
@@ -223,8 +232,6 @@ function gerarResposta(textoUsuario) {
   } else {
     respostaBase = "Isso fica guardado. Estarei aqui.";
     estado = estadoInicial();
-    vida.temaAtual = null;
-    vida.modoAtual = "neutro";
   }
 
   vida.temas[vida.temaAtual].push({
@@ -239,39 +246,32 @@ function gerarResposta(textoUsuario) {
 }
 
 // ==========================
-// BASE PARA PAINEL DE ASSUNTOS (OPÇÃO B)
-// ==========================
-function listarAssuntos() {
-  const vida = carregarVida();
-  return Object.keys(vida.temas).map(t => ({
-    tema: t,
-    total: vida.temas[t].length
-  }));
-}
-
-function obterHistoricoPorTema(tema) {
-  const vida = carregarVida();
-  return vida.temas[tema] || [];
-}
-
-// ==========================
-// VOZ INPUT
+// VOZ INPUT (CORRIGIDO)
 // ==========================
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
 if (SpeechRecognition) {
   const recognition = new SpeechRecognition();
   recognition.lang = "pt-BR";
+  recognition.continuous = false;
+  recognition.interimResults = false;
 
   micBtn.onclick = () => {
-    if (ouvindo) return;
-    ouvindo = true;
-    status.innerText = "Orion está ouvindo...";
-    recognition.start();
+    if (ouvindo || falando) return;
+
+    try {
+      ouvindo = true;
+      status.innerText = "Orion está ouvindo...";
+      recognition.start();
+    } catch {
+      ouvindo = false;
+    }
   };
 
   recognition.onresult = e => {
+    recognition.stop();
     ouvindo = false;
+
     const texto = e.results[0][0].transcript;
 
     registrar("Você", texto);
@@ -280,5 +280,15 @@ if (SpeechRecognition) {
     falar(resposta);
 
     status.innerText = "Orion permanece com você.";
+  };
+
+  recognition.onerror = () => {
+    recognition.stop();
+    ouvindo = false;
+    status.innerText = "Não consegui ouvir. Tente novamente.";
+  };
+
+  recognition.onend = () => {
+    ouvindo = false;
   };
 }
