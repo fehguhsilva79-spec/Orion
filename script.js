@@ -1,4 +1,8 @@
 // ==========================
+// ORION v1 - NÚCLEO COMPLETO
+// ==========================
+
+// ==========================
 // ELEMENTOS
 // ==========================
 const micBtn = document.getElementById("mic-btn");
@@ -10,10 +14,45 @@ let ouvindo = false;
 let falando = false;
 
 // ==========================
-// UTILITÁRIOS DE ESTADO
+// CONFIG / PLANOS
 // ==========================
-function podeOuvir() {
-  return !ouvindo && !falando && !speechSynthesis.speaking;
+const configKey = "orion_config";
+
+function configInicial() {
+  return {
+    plano: "free", // free | pro
+    limiteDiario: 20,
+    usosHoje: 0,
+    ultimaData: new Date().toDateString()
+  };
+}
+
+function carregarConfig() {
+  return JSON.parse(localStorage.getItem(configKey)) || configInicial();
+}
+
+function salvarConfig(c) {
+  localStorage.setItem(configKey, JSON.stringify(c));
+}
+
+function podeUsar() {
+  const c = carregarConfig();
+  const hoje = new Date().toDateString();
+
+  if (c.ultimaData !== hoje) {
+    c.usosHoje = 0;
+    c.ultimaData = hoje;
+    salvarConfig(c);
+  }
+
+  if (c.plano === "pro") return true;
+  return c.usosHoje < c.limiteDiario;
+}
+
+function registrarUso() {
+  const c = carregarConfig();
+  c.usosHoje++;
+  salvarConfig(c);
 }
 
 // ==========================
@@ -34,7 +73,6 @@ function falar(texto) {
 
   u.onend = () => {
     falando = false;
-    status.innerText = "Orion permanece com você.";
   };
 
   speechSynthesis.speak(u);
@@ -86,8 +124,8 @@ function detectarIntencao(texto) {
 
   if (/\b(lembra|não esquece|amanhã|mais tarde|daqui)\b/.test(texto)) return "lembrete";
   if (/\b(importante|guarda isso)\b/.test(texto)) return "importante";
-  if (/^(sim|pode|claro|ok)$/.test(texto.trim())) return "confirmar";
-  if (/^(não|deixa|esquece)$/.test(texto.trim())) return "negar";
+  if (/^(sim|pode|claro|ok)$/i.test(texto.trim())) return "confirmar";
+  if (/^(não|deixa|esquece)$/i.test(texto.trim())) return "negar";
 
   return "conversa";
 }
@@ -133,18 +171,6 @@ function responderPorModo(modo, textoBase) {
 }
 
 // ==========================
-// CONSCIÊNCIA MÍNIMA
-// ==========================
-function precisaIA(texto) {
-  const gatilhos = [
-    "sentindo", "confuso", "perdido",
-    "decidir", "vida", "medo",
-    "ansioso", "pensando"
-  ];
-  return gatilhos.some(g => texto.toLowerCase().includes(g));
-}
-
-// ==========================
 // HISTÓRICO
 // ==========================
 function registrar(autor, texto) {
@@ -174,7 +200,7 @@ function verificarLembretes() {
 setInterval(verificarLembretes, 60000);
 
 // ==========================
-// ESTADO DE DIÁLOGO
+// ESTADO
 // ==========================
 const estadoKey = "orion_estado";
 
@@ -194,23 +220,21 @@ function salvarEstado(e) {
 // MOTOR PRINCIPAL
 // ==========================
 function gerarResposta(textoUsuario) {
+  if (!podeUsar()) {
+    return "Você atingiu o limite do plano gratuito hoje. Para continuar sem limites, faça upgrade para o plano Pro.";
+  }
+
+  registrarUso();
+
   const vida = carregarVida();
   let estado = carregarEstado();
 
   const intencao = detectarIntencao(textoUsuario);
-  vida.temaAtual = detectarTema(textoUsuario);
+  const novoTema = detectarTema(textoUsuario);
+
+  vida.temaAtual = novoTema || "geral";
   vida.modoAtual = definirModo(vida.temaAtual);
 
-  // Consciência mínima
-  if (precisaIA(textoUsuario)) {
-    salvarVida(vida);
-    return responderPorModo(
-      vida.modoAtual,
-      "Eu entendi o que você quis dizer. Me conta um pouco mais."
-    );
-  }
-
-  // Confirmações
   if (vida.aguardandoConfirmacao) {
     if (intencao === "confirmar") {
       vida.lembretes.push({
@@ -274,7 +298,7 @@ function gerarResposta(textoUsuario) {
 }
 
 // ==========================
-// VOZ INPUT (ESTÁVEL)
+// VOZ INPUT
 // ==========================
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
@@ -285,7 +309,7 @@ if (SpeechRecognition) {
   recognition.interimResults = false;
 
   micBtn.onclick = () => {
-    if (!podeOuvir()) return;
+    if (ouvindo || falando) return;
 
     try {
       ouvindo = true;
@@ -306,6 +330,8 @@ if (SpeechRecognition) {
     const resposta = gerarResposta(texto);
     registrar("Orion", resposta);
     falar(resposta);
+
+    status.innerText = "Orion permanece com você.";
   };
 
   recognition.onerror = () => {
@@ -316,8 +342,5 @@ if (SpeechRecognition) {
 
   recognition.onend = () => {
     ouvindo = false;
-    if (!falando) {
-      status.innerText = "Orion permanece com você.";
-    }
   };
 }
