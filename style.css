@@ -1,230 +1,95 @@
-/* ==========================
-   RESET GLOBAL
-========================== */
 * {
+  box-sizing: border-box;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+body {
   margin: 0;
   padding: 0;
-  box-sizing: border-box;
-  font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  background: linear-gradient(180deg, #f7f3ee, #f2eee9);
+  min-height: 100vh;
 }
 
-/* ==========================
-   CORPO
-========================== */
-body {
-  background: #0f172a;
-  color: #e5e7eb;
-  height: 100vh;
-  overflow: hidden;
-}
-
-/* ==========================
-   LAYOUT PRINCIPAL
-========================== */
-.layout {
-  display: flex;
-  height: 100vh;
-  width: 100vw;
-}
-
-/* ==========================
-   SIDEBAR (ESTILO GPT)
-========================== */
-.sidebar {
-  width: 260px;
-  background: #020617;
-  border-right: 1px solid rgba(255,255,255,0.05);
-  display: flex;
-  flex-direction: column;
-  padding: 20px 14px;
-}
-
-/* PERFIL */
-.perfil {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding-bottom: 18px;
-  border-bottom: 1px solid rgba(255,255,255,0.06);
-}
-
-.avatar {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: #facc15;
-  color: #000;
-  font-weight: bold;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.nome {
-  font-size: 1rem;
-  font-weight: 600;
-}
-
-/* TEMAS */
-.temas {
-  margin-top: 18px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.temas button {
-  background: transparent;
-  border: none;
-  color: #cbd5f5;
-  text-align: left;
-  padding: 10px 12px;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: background 0.2s ease;
-  font-size: 0.9rem;
-}
-
-.temas button:hover {
-  background: rgba(255,255,255,0.06);
-}
-
-.temas button.active {
-  background: rgba(250,204,21,0.15);
-  color: #facc15;
-}
-
-/* RODAPÉ */
-.rodape {
-  margin-top: auto;
-  text-align: center;
-  font-size: 0.75rem;
-  opacity: 0.4;
-}
-
-/* ==========================
-   ÁREA PRINCIPAL (CHAT)
-========================== */
 .app {
-  flex: 1;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background: #020617;
+  justify-content: space-between;
+  padding: 40px 24px 60px 24px;
 }
 
-/* TOPO */
-.topo {
-  padding: 18px 24px;
-  border-bottom: 1px solid rgba(255,255,255,0.06);
-}
-
-.topo h1 {
-  font-size: 1.4rem;
-  color: #facc15;
-}
-
-.subtitle {
-  font-size: 0.85rem;
-  opacity: 0.7;
-}
-
-/* ==========================
-   CONVERSA
-========================== */
-.conversa {
-  flex: 1;
-  padding: 24px;
-  overflow-y: auto;
+.top {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  align-items: center;
+  gap: 28px;
 }
 
-.conversa::-webkit-scrollbar {
-  width: 6px;
+.logo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: #6b5a3c;
 }
 
-.conversa::-webkit-scrollbar-thumb {
-  background: rgba(250,204,21,0.4);
-  border-radius: 4px;
+.star {
+  font-size: 28px;
 }
 
-/* MENSAGENS */
-.mensagem {
-  max-width: 75%;
-  padding: 12px 16px;
-  border-radius: 14px;
-  line-height: 1.5;
-  font-size: 0.95rem;
+.name {
+  font-size: 28px;
+  letter-spacing: 2px;
 }
 
-.usuario {
-  align-self: flex-end;
-  background: #1e293b;
+.input-box {
+  width: 100%;
+  max-width: 420px;
+  background: rgba(255,255,255,0.7);
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  padding: 14px 18px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
 }
 
-.orion {
-  align-self: flex-start;
-  background: #020617;
-  border: 1px solid rgba(255,255,255,0.08);
-}
-
-/* ==========================
-   STATUS
-========================== */
-.status {
-  padding: 8px 24px;
-  font-size: 0.8rem;
+.input-box .icon {
+  margin-right: 10px;
   opacity: 0.6;
 }
 
-/* ==========================
-   CONTROLES
-========================== */
-.controls {
-  display: flex;
-  gap: 12px;
-  padding: 16px 24px;
-  border-top: 1px solid rgba(255,255,255,0.06);
-}
-
-.controls button {
-  flex: 1;
-  background: #facc15;
-  color: #000;
+.input-box input {
   border: none;
-  padding: 12px;
-  border-radius: 10px;
-  font-weight: 600;
+  outline: none;
+  width: 100%;
+  background: transparent;
+  font-size: 16px;
+}
+
+.bottom {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 20px; /* empurra mais para baixo */
+}
+
+.mic-button {
+  width: 100%;
+  max-width: 420px;
+  background: rgba(255,255,255,0.8);
+  border: none;
+  border-radius: 999px;
+  padding: 16px;
+  font-size: 18px;
   cursor: pointer;
-  transition: transform 0.15s ease, opacity 0.15s ease;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.08);
 }
 
-.controls button:hover {
-  opacity: 0.9;
+.mic-button:active {
+  transform: scale(0.98);
 }
 
-.controls button:active {
-  transform: scale(0.97);
-}
-
-/* ==========================
-   RESPONSIVO (MOBILE)
-========================== */
-@media (max-width: 768px) {
-  .sidebar {
-    display: none;
-  }
-
-  .layout {
-    flex-direction: column;
-  }
-
-  .controls {
-    flex-direction: column;
-  }
-
-  .mensagem {
-    max-width: 90%;
-  }
+.privacy {
+  font-size: 13px;
+  color: #777;
 }
