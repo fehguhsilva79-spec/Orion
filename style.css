@@ -22,7 +22,7 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 22px;
+  gap: 12px;
 }
 
 .logo {
@@ -32,19 +32,43 @@ body {
   color: #6b5a3c;
 }
 
-.star {
-  font-size: 28px;
-}
-
-.name {
-  font-size: 28px;
-  letter-spacing: 2px;
-}
+.star { font-size: 28px; }
+.name { font-size: 28px; letter-spacing: 2px; }
 
 .clock {
   font-size: 20px;
   color: #6b5a3c;
   font-weight: 500;
+}
+
+.list-container {
+  flex: 1;
+  overflow-y: auto;
+  margin-top: 20px;
+}
+
+.list-container h3 {
+  color: #6b5a3c;
+  margin-bottom: 8px;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.reminder-item {
+  background: rgba(255,255,255,0.8);
+  border-radius: 12px;
+  padding: 12px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+  cursor: pointer;
+}
+
+.reminder-item small {
+  color: #777;
 }
 
 .bottom {
@@ -67,11 +91,49 @@ body {
   box-shadow: 0 6px 16px rgba(0,0,0,0.08);
 }
 
-.mic-button:active {
-  transform: scale(0.98);
-}
-
 .privacy {
   font-size: 13px;
   color: #777;
+}
+
+/* ===== Modais ===== */
+.modal {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+
+.hidden { display: none; }
+
+.modal-content {
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px;
+  width: 90%;
+  max-width: 400px;
+}
+
+.notify-options {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 10px 0;
+}
+
+.notify-options button {
+  flex: 1;
+  padding: 10px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 10px;
 }
