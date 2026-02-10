@@ -1,70 +1,39 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <title>Orion</title>
-
-  <!-- IMPORTANTE PARA MOBILE -->
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
+  <meta charset="UTF-8" />
+  <title>Eron</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<div class="layout">
+  <div class="app">
 
-  <!-- ======================
-       BARRA LATERAL (TEMAS)
-  ======================= -->
-  <aside class="sidebar">
-    <div class="perfil">
-      <div class="avatar">O</div>
-      <div class="nome">Orion</div>
+    <div class="top">
+      <div class="logo">
+        <div class="star">✦</div>
+        <div class="name">eron</div>
+      </div>
+
+      <div class="input-box">
+        <span class="icon">🔍</span>
+        <input id="textInput" type="text" placeholder="O que você quer dizer hoje?">
+      </div>
     </div>
 
-    <nav class="temas">
-      <button data-tema="geral">Geral</button>
-      <button data-tema="emocional">Emocional</button>
-      <button data-tema="financeiro">Financeiro</button>
-      <button data-tema="trabalho">Trabalho</button>
-      <button data-tema="relacionamento">Relacionamentos</button>
-      <button data-tema="saude">Saúde</button>
-      <button data-tema="decisoes">Decisões</button>
-      <button data-tema="ideias">Ideias</button>
-    </nav>
+    <div class="bottom">
+      <button id="micButton" class="mic-button">
+        🎤 Falar agora
+      </button>
 
-    <div class="rodape">
-      <small>Projeto Orion</small>
-    </div>
-  </aside>
-
-  <!-- ======================
-       ÁREA PRINCIPAL
-  ======================= -->
-  <main class="app">
-
-    <header class="topo">
-      <h1>Orion</h1>
-      <p class="subtitle">Clareza antes da decisão.</p>
-    </header>
-
-    <section id="output" class="conversa"></section>
-
-    <div id="status" class="status">
-      Orion em repouso.
+      <div class="privacy">
+        Só você terá acesso isso.
+      </div>
     </div>
 
-    <div class="controls">
-      <button id="mic-btn">Falar</button>
-      <button id="stop-btn">Parar</button>
-    </div>
+  </div>
 
-  </main>
-
-</div>
-
-<!-- JS DO ORION -->
-<script src="script.js"></script>
-
+  <script src="script.js"></script>
 </body>
 </html>
