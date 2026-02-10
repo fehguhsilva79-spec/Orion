@@ -1,43 +1,75 @@
 const micButton = document.getElementById("micButton");
 const clockEl = document.getElementById("clock");
+const listSoon = document.getElementById("listSoon");
+const listLater = document.getElementById("listLater");
 
-let recognition;
-let isRecording = false;
+const confirmModal = document.getElementById("confirmModal");
+const confirmTextEl = document.getElementById("confirmText");
+const confirmDateEl = document.getElementById("confirmDate");
+const cancelBtn = document.getElementById("cancelBtn");
+const confirmBtn = document.getElementById("confirmBtn");
 
-// ===== Relógio em tempo real =====
+const detailModal = document.getElementById("detailModal");
+const detailTextEl = document.getElementById("detailText");
+const detailDateEl = document.getElementById("detailDate");
+const closeDetailBtn = document.getElementById("closeDetailBtn");
+
+let selectedNotifyBefore = 60; // padrão 1h
+let pendingReminder = null;
+let selectedReminderIndex = null;
+
+// ===== Relógio =====
 function updateClock() {
   const now = new Date();
-  const h = String(now.getHours()).padStart(2, "0");
-  const m = String(now.getMinutes()).padStart(2, "0");
-  const s = String(now.getSeconds()).padStart(2, "0");
-  clockEl.textContent = `${h}:${m}:${s}`;
+  clockEl.textContent = now.toLocaleTimeString();
 }
 setInterval(updateClock, 1000);
 updateClock();
 
-// ===== Notificações =====
-if ("Notification" in window) {
-  if (Notification.permission !== "granted") {
-    Notification.requestPermission();
-  }
-}
-
-// ===== Carregar compromissos =====
+// ===== Storage =====
 let reminders = JSON.parse(localStorage.getItem("reminders") || "[]");
 
-// ===== Checar compromissos a cada segundo =====
+// ===== Renderizar lista =====
+function renderLists() {
+  listSoon.innerHTML = "";
+  listLater.innerHTML = "";
+
+  const now = new Date();
+
+  const sorted = reminders
+    .filter(r => !r.done)
+    .sort((a,b) => new Date(a.dateTime) - new Date(b.dateTime));
+
+  sorted.forEach((r, index) => {
+    const item = document.createElement("div");
+    item.className = "reminder-item";
+    item.innerHTML = `
+      <div>${r.text}</div>
+      <small>${new Date(r.dateTime).toLocaleString()}</small>
+    `;
+
+    item.onclick = () => openDetail(index);
+
+    const diff = new Date(r.dateTime) - now;
+    if (diff <= 6 * 60 * 60 * 1000) {
+      listSoon.appendChild(item);
+    } else {
+      listLater.appendChild(item);
+    }
+  });
+}
+
+renderLists();
+
+// ===== Checar notificações =====
 setInterval(() => {
   const now = new Date();
 
   reminders.forEach((r) => {
-    if (!r.triggered && now >= new Date(r.dateTime)) {
-      r.triggered = true;
-
-      if ("Notification" in window && Notification.permission === "granted") {
-        new Notification("⏰ Lembrete", {
-          body: r.text,
-        });
-      } else {
+    if (!r.notified) {
+      const notifyTime = new Date(r.dateTime).getTime() - r.notifyBefore * 60000;
+      if (now.getTime() >= notifyTime) {
+        r.notified = true;
         alert("⏰ Lembrete: " + r.text);
       }
     }
@@ -47,105 +79,108 @@ setInterval(() => {
 }, 1000);
 
 // ===== Voz =====
+let recognition;
 if ("webkitSpeechRecognition" in window || "SpeechRecognition" in window) {
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   recognition = new SpeechRecognition();
   recognition.lang = "pt-BR";
-  recognition.continuous = false;
-  recognition.interimResults = false;
 
   recognition.onresult = function (event) {
     const transcript = event.results[0][0].transcript;
-    processCommand(transcript);
+    parseCommand(transcript);
   };
-
-  recognition.onerror = function (event) {
-    alert("Erro no reconhecimento de voz: " + event.error);
-  };
-
-  recognition.onend = function () {
-    isRecording = false;
-    micButton.innerText = "🎤 Falar agora";
-  };
-} else {
-  alert("Seu navegador não suporta reconhecimento de voz.");
 }
 
-micButton.addEventListener("click", () => {
-  if (!recognition) return;
+micButton.onclick = () => {
+  if (recognition) recognition.start();
+};
 
-  if (!isRecording) {
-    recognition.start();
-    isRecording = true;
-    micButton.innerText = "⏺️ Ouvindo...";
-  } else {
-    recognition.stop();
-    isRecording = false;
-    micButton.innerText = "🎤 Falar agora";
-  }
-});
-
-// ===== Processar comando =====
-function processCommand(text) {
+// ===== Parse comando =====
+function parseCommand(text) {
   const lower = text.toLowerCase();
-
-  // Procurar horário no formato HH:MM
   const timeMatch = lower.match(/(\d{1,2}):(\d{2})/);
 
   if (!timeMatch) {
-    alert("Não encontrei um horário. Diga algo como: 19:47 ou 11:09");
+    alert("Diga um horário como 14:57 ou 11:09");
     return;
   }
 
-  let hour = parseInt(timeMatch[1], 10);
-  let minute = parseInt(timeMatch[2], 10);
+  const hour = parseInt(timeMatch[1], 10);
+  const minute = parseInt(timeMatch[2], 10);
 
-  if (hour > 23 || minute > 59) {
-    alert("Horário inválido.");
-    return;
-  }
-
-  // Definir data
   const now = new Date();
-  let targetDate = new Date(now);
+  let date = new Date(now);
 
-  if (lower.includes("amanhã")) {
-    targetDate.setDate(now.getDate() + 1);
-  } else if (lower.includes("depois de amanhã")) {
-    targetDate.setDate(now.getDate() + 2);
-  } else {
-    // Se não falar dia, assume hoje
-    targetDate.setDate(now.getDate());
-  }
+  if (lower.includes("amanhã")) date.setDate(now.getDate() + 1);
+  else if (lower.includes("depois de amanhã")) date.setDate(now.getDate() + 2);
 
-  targetDate.setHours(hour);
-  targetDate.setMinutes(minute);
-  targetDate.setSeconds(0);
-  targetDate.setMilliseconds(0);
+  date.setHours(hour, minute, 0, 0);
+  if (date < now) date.setDate(date.getDate() + 1);
 
-  // Se o horário já passou hoje, joga para amanhã automaticamente
-  if (targetDate < now) {
-    targetDate.setDate(targetDate.getDate() + 1);
-  }
+  const cleanText = text.replace(timeMatch[0], "").trim();
 
-  // Texto do lembrete (remove o horário da frase)
-  const reminderText = text.replace(timeMatch[0], "").trim() || "Compromisso";
-
-  const reminder = {
-    text: reminderText,
-    dateTime: targetDate.toISOString(),
-    triggered: false,
+  pendingReminder = {
+    text: cleanText || "Compromisso",
+    dateTime: date.toISOString(),
+    notifyBefore: 60,
+    notified: false,
+    done: false
   };
 
-  reminders.push(reminder);
-  localStorage.setItem("reminders", JSON.stringify(reminders));
-
-  alert(
-    "✅ Lembrete salvo para " +
-      targetDate.toLocaleDateString() +
-      " às " +
-      String(hour).padStart(2, "0") +
-      ":" +
-      String(minute).padStart(2, "0")
-  );
+  openConfirmModal();
 }
+
+// ===== Modal confirmação =====
+function openConfirmModal() {
+  confirmTextEl.textContent = pendingReminder.text;
+  confirmDateEl.textContent = new Date(pendingReminder.dateTime).toLocaleString();
+  confirmModal.classList.remove("hidden");
+}
+
+document.querySelectorAll(".notify-options button").forEach(btn => {
+  btn.onclick = () => {
+    const min = parseInt(btn.getAttribute("data-min") || btn.getAttribute("data-add"));
+    if (!isNaN(min)) selectedNotifyBefore = min;
+  };
+});
+
+cancelBtn.onclick = () => {
+  pendingReminder = null;
+  confirmModal.classList.add("hidden");
+};
+
+confirmBtn.onclick = () => {
+  pendingReminder.notifyBefore = selectedNotifyBefore;
+  reminders.push(pendingReminder);
+  localStorage.setItem("reminders", JSON.stringify(reminders));
+  pendingReminder = null;
+  confirmModal.classList.add("hidden");
+  renderLists();
+};
+
+// ===== Detalhes =====
+function openDetail(index) {
+  selectedReminderIndex = index;
+  const r = reminders[index];
+  detailTextEl.textContent = r.text;
+  detailDateEl.textContent = new Date(r.dateTime).toLocaleString();
+  detailModal.classList.remove("hidden");
+}
+
+document.querySelectorAll("#detailModal .notify-options button").forEach(btn => {
+  btn.onclick = () => {
+    const addMin = parseInt(btn.getAttribute("data-add"));
+    const r = reminders[selectedReminderIndex];
+    const d = new Date(r.dateTime);
+    d.setMinutes(d.getMinutes() + addMin);
+    r.dateTime = d.toISOString();
+    r.notified = false;
+    localStorage.setItem("reminders", JSON.stringify(reminders));
+    renderLists();
+    detailModal.classList.add("hidden");
+  };
+});
+
+closeDetailBtn.onclick = () => {
+  detailModal.classList.add("hidden");
+};
