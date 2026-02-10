@@ -1,5 +1,4 @@
 const micButton = document.getElementById("micButton");
-const textInput = document.getElementById("textInput");
 const clockEl = document.getElementById("clock");
 
 let recognition;
@@ -57,7 +56,6 @@ if ("webkitSpeechRecognition" in window || "SpeechRecognition" in window) {
 
   recognition.onresult = function (event) {
     const transcript = event.results[0][0].transcript;
-    textInput.value = transcript;
     processCommand(transcript);
   };
 
