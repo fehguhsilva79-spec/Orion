@@ -47,30 +47,6 @@ body {
   font-weight: 500;
 }
 
-.input-box {
-  width: 100%;
-  max-width: 420px;
-  background: rgba(255,255,255,0.7);
-  border-radius: 999px;
-  display: flex;
-  align-items: center;
-  padding: 14px 18px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-}
-
-.input-box .icon {
-  margin-right: 10px;
-  opacity: 0.6;
-}
-
-.input-box input {
-  border: none;
-  outline: none;
-  width: 100%;
-  background: transparent;
-  font-size: 16px;
-}
-
 .bottom {
   display: flex;
   flex-direction: column;
