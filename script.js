@@ -1,12 +1,33 @@
-// ================== ELEMENTOS ==================
+// ================== TELAS ==================
+const loginScreen = document.getElementById("loginScreen");
+const registerScreen = document.getElementById("registerScreen");
+const appScreen = document.getElementById("appScreen");
+
+// Login
+const loginEmail = document.getElementById("loginEmail");
+const loginPassword = document.getElementById("loginPassword");
+const loginBtn = document.getElementById("loginBtn");
+const goToRegister = document.getElementById("goToRegister");
+
+// Cadastro
+const registerEmail = document.getElementById("registerEmail");
+const registerPassword = document.getElementById("registerPassword");
+const registerPasswordConfirm = document.getElementById("registerPasswordConfirm");
+const registerBtn = document.getElementById("registerBtn");
+const goToLogin = document.getElementById("goToLogin");
+
+// Menu
+const menuBtn = document.getElementById("menuBtn");
+const sideMenu = document.getElementById("sideMenu");
+const logoutBtn = document.getElementById("logoutBtn");
+
+// App
 const micBtn = document.getElementById("micBtn");
 const statusEl = document.getElementById("status");
 const confirmArea = document.getElementById("confirmArea");
 const reminderList = document.getElementById("reminderList");
 
-// ================== AUTH LOCAL ==================
-let currentUser = localStorage.getItem("eron_current_user");
-
+// ================== UTIL AUTH ==================
 function getUsers() {
   return JSON.parse(localStorage.getItem("eron_users") || "{}");
 }
@@ -15,67 +36,137 @@ function saveUsers(users) {
   localStorage.setItem("eron_users", JSON.stringify(users));
 }
 
-function showLogin() {
-  const overlay = document.createElement("div");
-  overlay.style.position = "fixed";
-  overlay.style.inset = "0";
-  overlay.style.background = "#f5f2ee";
-  overlay.style.display = "flex";
-  overlay.style.flexDirection = "column";
-  overlay.style.justifyContent = "center";
-  overlay.style.alignItems = "center";
-  overlay.style.zIndex = "9999";
-  overlay.innerHTML = `
-    <h2 style="margin-bottom:10px;">Entrar no Eron</h2>
-    <input id="loginUser" placeholder="Usuário" style="padding:10px;margin:5px;border-radius:8px;border:1px solid #ccc;">
-    <input id="loginPass" type="password" placeholder="Senha" style="padding:10px;margin:5px;border-radius:8px;border:1px solid #ccc;">
-    <button id="btnLogin" style="padding:10px 20px;margin-top:10px;border-radius:999px;border:none;background:#ede9e4;">Entrar / Cadastrar</button>
-    <p style="font-size:12px;opacity:.7;margin-top:10px;">Se não existir, a conta será criada.</p>
-  `;
-  document.body.appendChild(overlay);
-
-  document.getElementById("btnLogin").onclick = () => {
-    const u = document.getElementById("loginUser").value.trim();
-    const p = document.getElementById("loginPass").value.trim();
-    if (!u || !p) {
-      alert("Preencha usuário e senha");
-      return;
-    }
-
-    const users = getUsers();
-    if (!users[u]) {
-      users[u] = { password: p };
-      saveUsers(users);
-    } else {
-      if (users[u].password !== p) {
-        alert("Senha incorreta");
-        return;
-      }
-    }
-
-    localStorage.setItem("eron_current_user", u);
-    currentUser = u;
-    overlay.remove();
-    loadReminders();
-  };
+function setCurrentUser(email) {
+  localStorage.setItem("eron_current_user", email);
 }
 
-if (!currentUser) {
-  showLogin();
+function getCurrentUser() {
+  return localStorage.getItem("eron_current_user");
 }
 
-// ================== DADOS ==================
+function logout() {
+  localStorage.removeItem("eron_current_user");
+  showLoginScreen();
+}
+
+// ================== TROCA DE TELAS ==================
+function showLoginScreen() {
+  loginScreen.classList.remove("hidden");
+  registerScreen.classList.add("hidden");
+  appScreen.classList.add("hidden");
+}
+
+function showRegisterScreen() {
+  loginScreen.classList.add("hidden");
+  registerScreen.classList.remove("hidden");
+  appScreen.classList.add("hidden");
+}
+
+function showAppScreen() {
+  loginScreen.classList.add("hidden");
+  registerScreen.classList.add("hidden");
+  appScreen.classList.remove("hidden");
+}
+
+// ================== MOSTRAR / OCULTAR SENHA ==================
+window.togglePassword = function (id) {
+  const input = document.getElementById(id);
+  if (input.type === "password") {
+    input.type = "text";
+  } else {
+    input.type = "password";
+  }
+};
+
+// ================== EVENTOS AUTH ==================
+goToRegister.onclick = (e) => {
+  e.preventDefault();
+  showRegisterScreen();
+};
+
+goToLogin.onclick = (e) => {
+  e.preventDefault();
+  showLoginScreen();
+};
+
+loginBtn.onclick = () => {
+  const email = loginEmail.value.trim().toLowerCase();
+  const password = loginPassword.value;
+
+  if (!email || !password) {
+    alert("Preencha email e senha.");
+    return;
+  }
+
+  const users = getUsers();
+
+  if (!users[email]) {
+    alert("Conta não encontrada. Crie uma conta.");
+    return;
+  }
+
+  if (users[email].password !== password) {
+    alert("Senha incorreta.");
+    return;
+  }
+
+  setCurrentUser(email);
+  initApp();
+};
+
+registerBtn.onclick = () => {
+  const email = registerEmail.value.trim().toLowerCase();
+  const password = registerPassword.value;
+  const confirm = registerPasswordConfirm.value;
+
+  if (!email || !password || !confirm) {
+    alert("Preencha todos os campos.");
+    return;
+  }
+
+  if (password !== confirm) {
+    alert("As senhas não coincidem.");
+    return;
+  }
+
+  const users = getUsers();
+
+  if (users[email]) {
+    alert("Este email já está cadastrado.");
+    return;
+  }
+
+  users[email] = { password };
+  saveUsers(users);
+
+  alert("Conta criada com sucesso! Faça login.");
+  showLoginScreen();
+};
+
+// ================== MENU ==================
+menuBtn.onclick = () => {
+  sideMenu.classList.toggle("hidden");
+};
+
+logoutBtn.onclick = () => {
+  logout();
+};
+
+// ================== DADOS DE LEMBRETES ==================
 let reminders = [];
 
 function loadReminders() {
-  if (!currentUser) return;
-  reminders = JSON.parse(localStorage.getItem("eron_reminders_" + currentUser) || "[]");
+  const user = getCurrentUser();
+  if (!user) return;
+  reminders = JSON.parse(localStorage.getItem("eron_reminders_" + user) || "[]");
   renderList();
 }
 
 function saveAndRender() {
+  const user = getCurrentUser();
+  if (!user) return;
   reminders.sort((a, b) => a.time - b.time);
-  localStorage.setItem("eron_reminders_" + currentUser, JSON.stringify(reminders));
+  localStorage.setItem("eron_reminders_" + user, JSON.stringify(reminders));
   renderList();
 }
 
@@ -105,7 +196,7 @@ if ("webkitSpeechRecognition" in window || "SpeechRecognition" in window) {
   statusEl.textContent = "Reconhecimento de voz não suportado.";
 }
 
-micBtn.addEventListener("click", () => {
+micBtn.onclick = () => {
   if (!recognition) {
     alert("Seu navegador não suporta reconhecimento de voz.");
     return;
@@ -114,7 +205,7 @@ micBtn.addEventListener("click", () => {
   try {
     recognition.start();
   } catch (e) {}
-});
+};
 
 if (recognition) {
   recognition.onresult = (event) => {
@@ -198,12 +289,6 @@ function showConfirmation(text, date) {
       <button class="btn-confirm">Confirmar</button>
       <button class="btn-delete">Excluir</button>
     </div>
-    <p style="margin-top:8px;">Lembrar-me:</p>
-    <div class="actions">
-      <button class="btn-delay" data-min="30">30 min antes</button>
-      <button class="btn-delay" data-min="60">1 hora antes</button>
-      <button class="btn-delay" data-min="1440">1 dia antes</button>
-    </div>
   `;
 
   confirmArea.appendChild(card);
@@ -216,14 +301,6 @@ function showConfirmation(text, date) {
   card.querySelector(".btn-delete").onclick = () => {
     confirmArea.classList.add("hidden");
   };
-
-  card.querySelectorAll(".btn-delay").forEach(btn => {
-    btn.onclick = () => {
-      const min = parseInt(btn.dataset.min, 10);
-      addReminder(text, date, min);
-      confirmArea.classList.add("hidden");
-    };
-  });
 }
 
 // ================== LEMBRETES ==================
@@ -252,8 +329,6 @@ function renderList() {
       <h3>${date.toLocaleString("pt-BR")}</h3>
       <p>${rem.text}</p>
       <div class="actions">
-        <button class="btn-view">Ver</button>
-        <button class="btn-delay">Adiar 10 min</button>
         <button class="btn-delete">Excluir</button>
       </div>
     `;
@@ -263,21 +338,11 @@ function renderList() {
       saveAndRender();
     };
 
-    card.querySelector(".btn-delay").onclick = () => {
-      rem.time += 10 * 60 * 1000;
-      rem.notified = false;
-      saveAndRender();
-    };
-
-    card.querySelector(".btn-view").onclick = () => {
-      alert(rem.text);
-    };
-
     reminderList.appendChild(card);
   });
 }
 
-// ================== CHECK TEMPO ==================
+// ================== CHECK ==================
 function checkReminders() {
   const now = Date.now();
 
@@ -298,6 +363,14 @@ function checkReminders() {
 setInterval(checkReminders, 1000);
 
 // ================== INIT ==================
-if (currentUser) {
+function initApp() {
+  showAppScreen();
   loadReminders();
+}
+
+const user = getCurrentUser();
+if (user) {
+  initApp();
+} else {
+  showLoginScreen();
 }
