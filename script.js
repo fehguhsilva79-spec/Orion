@@ -1,35 +1,46 @@
+// ================== HELPERS ==================
+function $(id) {
+  const el = document.getElementById(id);
+  if (!el) console.warn("Elemento não encontrado:", id);
+  return el;
+}
+
 // ================== TELAS ==================
-const loginScreen = document.getElementById("loginScreen");
-const registerScreen = document.getElementById("registerScreen");
-const appScreen = document.getElementById("appScreen");
+const loginScreen = $("loginScreen");
+const registerScreen = $("registerScreen");
+const appScreen = $("appScreen");
 
 // Login
-const loginEmail = document.getElementById("loginEmail");
-const loginPassword = document.getElementById("loginPassword");
-const loginBtn = document.getElementById("loginBtn");
-const goToRegister = document.getElementById("goToRegister");
+const loginEmail = $("loginEmail");
+const loginPassword = $("loginPassword");
+const loginBtn = $("loginBtn");
+const goToRegister = $("goToRegister");
 
 // Cadastro
-const registerEmail = document.getElementById("registerEmail");
-const registerPassword = document.getElementById("registerPassword");
-const registerPasswordConfirm = document.getElementById("registerPasswordConfirm");
-const registerBtn = document.getElementById("registerBtn");
-const goToLogin = document.getElementById("goToLogin");
+const registerEmail = $("registerEmail");
+const registerPassword = $("registerPassword");
+const registerPasswordConfirm = $("registerPasswordConfirm");
+const registerBtn = $("registerBtn");
+const goToLogin = $("goToLogin");
 
 // Menu
-const menuBtn = document.getElementById("menuBtn");
-const sideMenu = document.getElementById("sideMenu");
-const logoutBtn = document.getElementById("logoutBtn");
+const menuBtn = $("menuBtn");
+const sideMenu = $("sideMenu");
+const logoutBtn = $("logoutBtn");
 
 // App
-const micBtn = document.getElementById("micBtn");
-const statusEl = document.getElementById("status");
-const confirmArea = document.getElementById("confirmArea");
-const reminderList = document.getElementById("reminderList");
+const micBtn = $("micBtn");
+const statusEl = $("status");
+const confirmArea = $("confirmArea");
+const reminderList = $("reminderList");
 
 // ================== UTIL AUTH ==================
 function getUsers() {
-  return JSON.parse(localStorage.getItem("eron_users") || "{}");
+  try {
+    return JSON.parse(localStorage.getItem("eron_users") || "{}");
+  } catch {
+    return {};
+  }
 }
 
 function saveUsers(users) {
@@ -51,18 +62,21 @@ function logout() {
 
 // ================== TROCA DE TELAS ==================
 function showLoginScreen() {
+  if (!loginScreen || !registerScreen || !appScreen) return;
   loginScreen.classList.remove("hidden");
   registerScreen.classList.add("hidden");
   appScreen.classList.add("hidden");
 }
 
 function showRegisterScreen() {
+  if (!loginScreen || !registerScreen || !appScreen) return;
   loginScreen.classList.add("hidden");
   registerScreen.classList.remove("hidden");
   appScreen.classList.add("hidden");
 }
 
 function showAppScreen() {
+  if (!loginScreen || !registerScreen || !appScreen) return;
   loginScreen.classList.add("hidden");
   registerScreen.classList.add("hidden");
   appScreen.classList.remove("hidden");
@@ -71,86 +85,95 @@ function showAppScreen() {
 // ================== MOSTRAR / OCULTAR SENHA ==================
 window.togglePassword = function (id) {
   const input = document.getElementById(id);
-  if (input.type === "password") {
-    input.type = "text";
-  } else {
-    input.type = "password";
-  }
+  if (!input) return;
+  input.type = input.type === "password" ? "text" : "password";
 };
 
 // ================== EVENTOS AUTH ==================
-goToRegister.onclick = (e) => {
-  e.preventDefault();
-  showRegisterScreen();
-};
+if (goToRegister) {
+  goToRegister.onclick = (e) => {
+    e.preventDefault();
+    showRegisterScreen();
+  };
+}
 
-goToLogin.onclick = (e) => {
-  e.preventDefault();
-  showLoginScreen();
-};
+if (goToLogin) {
+  goToLogin.onclick = (e) => {
+    e.preventDefault();
+    showLoginScreen();
+  };
+}
 
-loginBtn.onclick = () => {
-  const email = loginEmail.value.trim().toLowerCase();
-  const password = loginPassword.value;
+if (loginBtn) {
+  loginBtn.onclick = () => {
+    const email = loginEmail.value.trim().toLowerCase();
+    const password = loginPassword.value;
 
-  if (!email || !password) {
-    alert("Preencha email e senha.");
-    return;
-  }
+    if (!email || !password) {
+      alert("Preencha email e senha.");
+      return;
+    }
 
-  const users = getUsers();
+    const users = getUsers();
 
-  if (!users[email]) {
-    alert("Conta não encontrada. Crie uma conta.");
-    return;
-  }
+    if (!users[email]) {
+      alert("Conta não encontrada. Crie uma conta.");
+      return;
+    }
 
-  if (users[email].password !== password) {
-    alert("Senha incorreta.");
-    return;
-  }
+    if (users[email].password !== password) {
+      alert("Senha incorreta.");
+      return;
+    }
 
-  setCurrentUser(email);
-  initApp();
-};
+    setCurrentUser(email);
+    initApp();
+  };
+}
 
-registerBtn.onclick = () => {
-  const email = registerEmail.value.trim().toLowerCase();
-  const password = registerPassword.value;
-  const confirm = registerPasswordConfirm.value;
+if (registerBtn) {
+  registerBtn.onclick = () => {
+    const email = registerEmail.value.trim().toLowerCase();
+    const password = registerPassword.value;
+    const confirm = registerPasswordConfirm.value;
 
-  if (!email || !password || !confirm) {
-    alert("Preencha todos os campos.");
-    return;
-  }
+    if (!email || !password || !confirm) {
+      alert("Preencha todos os campos.");
+      return;
+    }
 
-  if (password !== confirm) {
-    alert("As senhas não coincidem.");
-    return;
-  }
+    if (password !== confirm) {
+      alert("As senhas não coincidem.");
+      return;
+    }
 
-  const users = getUsers();
+    const users = getUsers();
 
-  if (users[email]) {
-    alert("Este email já está cadastrado.");
-    return;
-  }
+    if (users[email]) {
+      alert("Este email já está cadastrado.");
+      return;
+    }
 
-  users[email] = { password };
-  saveUsers(users);
+    users[email] = { password };
+    saveUsers(users);
 
-  alert("Conta criada com sucesso! Faça login.");
-  showLoginScreen();
-};
+    alert("Conta criada com sucesso! Faça login.");
+    showLoginScreen();
+  };
+}
 
 // ================== MENU ==================
-menuBtn.onclick = () => {
-  sideMenu.classList.toggle("hidden");
-};
+if (menuBtn && sideMenu) {
+  menuBtn.onclick = () => {
+    sideMenu.classList.toggle("hidden");
+  };
+}
 
-logoutBtn.onclick = () => {
-  logout();
-};
+if (logoutBtn) {
+  logoutBtn.onclick = () => {
+    logout();
+  };
+}
 
 // ================== DADOS DE LEMBRETES ==================
 let reminders = [];
@@ -158,7 +181,11 @@ let reminders = [];
 function loadReminders() {
   const user = getCurrentUser();
   if (!user) return;
-  reminders = JSON.parse(localStorage.getItem("eron_reminders_" + user) || "[]");
+  try {
+    reminders = JSON.parse(localStorage.getItem("eron_reminders_" + user) || "[]");
+  } catch {
+    reminders = [];
+  }
   renderList();
 }
 
@@ -171,10 +198,8 @@ function saveAndRender() {
 }
 
 // ================== NOTIFICAÇÕES ==================
-if ("Notification" in window) {
-  if (Notification.permission !== "granted") {
-    Notification.requestPermission();
-  }
+if ("Notification" in window && Notification.permission !== "granted") {
+  Notification.requestPermission();
 }
 
 function sendNotification(title, body) {
@@ -192,30 +217,32 @@ if ("webkitSpeechRecognition" in window || "SpeechRecognition" in window) {
   recognition.lang = "pt-BR";
   recognition.continuous = false;
   recognition.interimResults = false;
-} else {
+} else if (statusEl) {
   statusEl.textContent = "Reconhecimento de voz não suportado.";
 }
 
-micBtn.onclick = () => {
-  if (!recognition) {
-    alert("Seu navegador não suporta reconhecimento de voz.");
-    return;
-  }
-  statusEl.textContent = "Ouvindo...";
-  try {
-    recognition.start();
-  } catch (e) {}
-};
+if (micBtn) {
+  micBtn.onclick = () => {
+    if (!recognition) {
+      alert("Seu navegador não suporta reconhecimento de voz.");
+      return;
+    }
+    statusEl.textContent = "Ouvindo...";
+    try {
+      recognition.start();
+    } catch (e) {}
+  };
+}
 
 if (recognition) {
   recognition.onresult = (event) => {
     const text = event.results[0][0].transcript;
-    statusEl.textContent = "Reconhecido";
+    if (statusEl) statusEl.textContent = "Reconhecido";
     handleSpokenText(text);
   };
 
   recognition.onerror = () => {
-    statusEl.textContent = "Erro ao reconhecer voz.";
+    if (statusEl) statusEl.textContent = "Erro ao reconhecer voz.";
   };
 }
 
@@ -275,6 +302,8 @@ function handleSpokenText(text) {
 }
 
 function showConfirmation(text, date) {
+  if (!confirmArea) return;
+
   confirmArea.classList.remove("hidden");
   confirmArea.innerHTML = "";
 
@@ -318,6 +347,8 @@ function addReminder(text, date, notifyBeforeMinutes) {
 }
 
 function renderList() {
+  if (!reminderList) return;
+
   reminderList.innerHTML = "";
 
   reminders.forEach(rem => {
