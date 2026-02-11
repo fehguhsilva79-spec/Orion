@@ -9,7 +9,7 @@ let reminders = JSON.parse(localStorage.getItem("eron_reminders") || "[]");
 // ================= CLOCK =================
 function updateClock() {
   const now = new Date();
-  clockEl.textContent = now.toLocaleString("pt-BR");
+  clockEl.textContent = now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
 }
 setInterval(updateClock, 1000);
 updateClock();
@@ -32,15 +32,17 @@ micBtn.addEventListener("click", () => {
   recognition.start();
 });
 
-recognition.onresult = (event) => {
-  const text = event.results[0][0].transcript;
-  statusEl.textContent = "Reconhecido: " + text;
-  handleSpokenText(text);
-};
+if (recognition) {
+  recognition.onresult = (event) => {
+    const text = event.results[0][0].transcript;
+    statusEl.textContent = "Reconhecido";
+    handleSpokenText(text);
+  };
 
-recognition.onerror = () => {
-  statusEl.textContent = "Erro ao reconhecer voz.";
-};
+  recognition.onerror = () => {
+    statusEl.textContent = "Erro ao reconhecer voz.";
+  };
+}
 
 // ================= PARSE =================
 function parseDateTime(text) {
@@ -92,7 +94,7 @@ function handleSpokenText(text) {
   const date = parseDateTime(text);
 
   if (!date) {
-    alert("Não consegui entender o horário. Fale algo como: 14:57, 11:09, meio dia, etc.");
+    alert("Não consegui entender o horário. Diga algo como: 19:47, 11:09, meio dia, etc.");
     return;
   }
 
