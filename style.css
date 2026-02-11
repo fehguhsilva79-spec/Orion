@@ -5,7 +5,7 @@
 
 body {
   margin: 0;
-  background: #020617;
+  background: #e5e7eb;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -15,86 +15,106 @@ body {
 .phone {
   width: 390px;
   max-width: 100%;
-  background: #020617;
+  background: #f5f2ee;
+  border-radius: 24px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.25);
 }
 
 .screen {
   min-height: 100vh;
   padding: 16px;
-  color: #e5e7eb;
+  color: #4b5563;
+  display: flex;
+  flex-direction: column;
 }
 
 .top {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
 }
 
-.logo {
-  font-size: 20px;
-  font-weight: 600;
-  text-transform: lowercase;
-}
-
-.clock {
+.status-left, .status-right {
   font-size: 12px;
   opacity: 0.8;
 }
 
-.center-area {
-  position: relative;
-  height: 45vh;
+.brand {
+  text-align: center;
+}
+
+.star {
+  font-size: 18px;
+  color: #d4af37;
+}
+
+.name {
+  font-size: 28px;
+  font-weight: 500;
+  color: #4b5563;
+}
+
+.spacer {
+  flex: 1;
+}
+
+/* Botão falar */
+.talk-area {
   display: flex;
   flex-direction: column;
-  justify-content: flex-end; /* joga o botão mais para baixo */
+  align-items: center;
+  margin-bottom: 24px;
+  gap: 8px;
+}
+
+.talk-btn {
+  display: flex;
   align-items: center;
   gap: 10px;
-}
-
-.mic {
-  width: 96px;
-  height: 96px;
-  border-radius: 50%;
+  padding: 14px 22px;
+  border-radius: 999px;
   border: none;
-  font-size: 42px;
+  background: #ede9e4;
+  color: #4b5563;
+  font-size: 16px;
   cursor: pointer;
-  background: #22c55e;
-  color: #022c22;
-  box-shadow: 0 10px 30px rgba(34,197,94,0.35);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.15);
 }
 
-.status {
+.talk-btn .mic {
+  font-size: 20px;
+}
+
+.hint {
   font-size: 12px;
-  opacity: 0.8;
+  opacity: 0.7;
 }
 
-.hidden {
-  display: none;
-}
+/* Confirmação e lista */
+.hidden { display: none; }
 
-/* Confirmação */
-.confirm {
-  margin: 10px 0 14px 0;
+.confirm, .list {
+  margin-top: 10px;
 }
 
 .card {
-  background: #020617;
-  border: 1px solid #0f172a;
+  background: #f1ede8;
   border-radius: 14px;
   padding: 12px;
   margin-bottom: 10px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
 }
 
 .card h3 {
   margin: 0 0 6px 0;
   font-size: 14px;
+  color: #374151;
 }
 
 .card p {
   margin: 0 0 8px 0;
   font-size: 13px;
-  opacity: 0.9;
+  color: #4b5563;
   word-wrap: break-word;
 }
 
@@ -112,14 +132,14 @@ body {
   font-size: 12px;
 }
 
-.btn-confirm { background: #22c55e; color: #022c22; }
+.btn-confirm { background: #22c55e; color: #064e3b; }
 .btn-delete { background: #ef4444; color: #fff; }
-.btn-delay { background: #eab308; color: #111827; }
+.btn-delay { background: #eab308; color: #3f2d00; }
 .btn-view { background: #3b82f6; color: #fff; }
 
-/* Lista */
-.list h2 {
-  font-size: 14px;
-  margin: 10px 0;
-  opacity: 0.9;
+.privacy {
+  text-align: center;
+  font-size: 12px;
+  opacity: 0.6;
+  margin-top: 10px;
 }
