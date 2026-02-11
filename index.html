@@ -5,27 +5,78 @@
   <title>Eron</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <!-- PWA -->
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#f5f2ee">
-
   <!-- Estilo -->
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div class="phone">
+
+  <!-- ================= LOGIN ================= -->
+  <div id="loginScreen" class="auth-screen">
+    <h2>Entrar no Eron</h2>
+
+    <input id="loginEmail" type="email" placeholder="Email" />
+    <div class="password-field">
+      <input id="loginPassword" type="password" placeholder="Senha" />
+      <button type="button" onclick="togglePassword('loginPassword')">👁</button>
+    </div>
+
+    <button id="loginBtn">Entrar</button>
+
+    <p>
+      Não tem conta?
+      <a href="#" id="goToRegister">Criar conta</a>
+    </p>
+  </div>
+
+  <!-- ================= CADASTRO ================= -->
+  <div id="registerScreen" class="auth-screen hidden">
+    <h2>Criar conta</h2>
+
+    <input id="registerEmail" type="email" placeholder="Email" />
+
+    <div class="password-field">
+      <input id="registerPassword" type="password" placeholder="Senha" />
+      <button type="button" onclick="togglePassword('registerPassword')">👁</button>
+    </div>
+
+    <div class="password-field">
+      <input id="registerPasswordConfirm" type="password" placeholder="Confirmar senha" />
+      <button type="button" onclick="togglePassword('registerPasswordConfirm')">👁</button>
+    </div>
+
+    <button id="registerBtn">Criar conta</button>
+
+    <p>
+      Já tem conta?
+      <a href="#" id="goToLogin">Voltar para login</a>
+    </p>
+  </div>
+
+  <!-- ================= APP ================= -->
+  <div id="appScreen" class="phone hidden">
     <div class="screen">
+
       <header class="top">
+        <button id="menuBtn" class="menu-btn">☰</button>
         <div class="brand">
           <div class="star">✦</div>
           <div class="name">eron</div>
         </div>
       </header>
 
-      <!-- Área central vazia (como na imagem) -->
+      <!-- Menu lateral -->
+      <aside id="sideMenu" class="side-menu hidden">
+        <h3>Configurações</h3>
+        <button id="accountBtn">Conta</button>
+        <button id="planBtn">Plano</button>
+        <button id="notificationsBtn">Notificações</button>
+        <button id="logoutBtn">Sair</button>
+      </aside>
+
+      <!-- Área central vazia -->
       <div class="spacer"></div>
 
-      <!-- Botão de falar (mais embaixo) -->
+      <!-- Botão de falar -->
       <div class="talk-area">
         <button id="micBtn" class="talk-btn">
           <span class="mic">🎤</span>
@@ -34,26 +85,20 @@
         <div id="status" class="hint">Toque e fale seu lembrete</div>
       </div>
 
-      <!-- Confirmação em tela -->
+      <!-- Confirmação -->
       <section id="confirmArea" class="confirm hidden"></section>
 
-      <!-- Lista de compromissos -->
+      <!-- Lista de lembretes -->
       <section class="list">
         <div id="reminderList"></div>
       </section>
 
-      <footer class="privacy">Só você terá acesso isso.</footer>
+      <footer class="privacy">Só você terá acesso a isso.</footer>
     </div>
   </div>
 
   <!-- Script principal -->
   <script src="script.js"></script>
 
-  <!-- Registro do Service Worker (para instalar como app) -->
-  <script>
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("./sw.js");
-    }
-  </script>
 </body>
 </html>
