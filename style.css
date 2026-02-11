@@ -18,6 +18,7 @@ body {
   background: #f5f2ee;
   border-radius: 24px;
   box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+  overflow: hidden;
 }
 
 .screen {
@@ -28,15 +29,12 @@ body {
   flex-direction: column;
 }
 
+/* Topo só com logo */
 .top {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
-}
-
-.status-left, .status-right {
-  font-size: 12px;
-  opacity: 0.8;
+  margin-bottom: 8px;
 }
 
 .brand {
@@ -54,6 +52,7 @@ body {
   color: #4b5563;
 }
 
+/* Espaço central vazio */
 .spacer {
   flex: 1;
 }
@@ -81,6 +80,10 @@ body {
   box-shadow: 0 6px 16px rgba(0,0,0,0.15);
 }
 
+.talk-btn:active {
+  transform: scale(0.98);
+}
+
 .talk-btn .mic {
   font-size: 20px;
 }
@@ -91,12 +94,16 @@ body {
 }
 
 /* Confirmação e lista */
-.hidden { display: none; }
+.hidden {
+  display: none;
+}
 
-.confirm, .list {
+.confirm,
+.list {
   margin-top: 10px;
 }
 
+/* Cards */
 .card {
   background: #f1ede8;
   border-radius: 14px;
@@ -132,11 +139,13 @@ body {
   font-size: 12px;
 }
 
+/* Botões */
 .btn-confirm { background: #22c55e; color: #064e3b; }
-.btn-delete { background: #ef4444; color: #fff; }
-.btn-delay { background: #eab308; color: #3f2d00; }
-.btn-view { background: #3b82f6; color: #fff; }
+.btn-delete  { background: #ef4444; color: #ffffff; }
+.btn-delay   { background: #eab308; color: #3f2d00; }
+.btn-view    { background: #3b82f6; color: #ffffff; }
 
+/* Rodapé */
 .privacy {
   text-align: center;
   font-size: 12px;
