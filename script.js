@@ -2,19 +2,10 @@ const micBtn = document.getElementById("micBtn");
 const statusEl = document.getElementById("status");
 const confirmArea = document.getElementById("confirmArea");
 const reminderList = document.getElementById("reminderList");
-const clockEl = document.getElementById("clock");
 
 let reminders = JSON.parse(localStorage.getItem("eron_reminders") || "[]");
 
-// ================= CLOCK =================
-function updateClock() {
-  const now = new Date();
-  clockEl.textContent = now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
-}
-setInterval(updateClock, 1000);
-updateClock();
-
-// ================= SPEECH =================
+// ===== SPEECH =====
 let recognition;
 if ("webkitSpeechRecognition" in window || "SpeechRecognition" in window) {
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -44,11 +35,10 @@ if (recognition) {
   };
 }
 
-// ================= PARSE =================
+// ===== PARSE DATA/HORA =====
 function parseDateTime(text) {
   let t = text.toLowerCase();
 
-  // Dia
   let date = new Date();
   if (t.includes("depois de amanhã")) {
     date.setDate(date.getDate() + 2);
@@ -56,16 +46,13 @@ function parseDateTime(text) {
     date.setDate(date.getDate() + 1);
   }
 
-  // Hora
   let hour = null;
   let minute = null;
 
   if (t.includes("meio dia") || t.includes("meiodia")) {
-    hour = 12;
-    minute = 0;
+    hour = 12; minute = 0;
   } else if (t.includes("meia noite") || t.includes("meianoite")) {
-    hour = 0;
-    minute = 0;
+    hour = 0; minute = 0;
   } else {
     const match = t.match(/(\d{1,2})[:h](\d{2})/);
     if (match) {
@@ -74,13 +61,10 @@ function parseDateTime(text) {
     }
   }
 
-  if (hour === null || minute === null) {
-    return null;
-  }
+  if (hour === null || minute === null) return null;
 
   date.setHours(hour, minute, 0, 0);
 
-  // Se for hoje e já passou, joga pra amanhã
   const now = new Date();
   if (date.getTime() < now.getTime()) {
     date.setDate(date.getDate() + 1);
@@ -89,19 +73,18 @@ function parseDateTime(text) {
   return date;
 }
 
-// ================= HANDLE =================
+// ===== FLUXO =====
 function handleSpokenText(text) {
   const date = parseDateTime(text);
 
   if (!date) {
-    alert("Não consegui entender o horário. Diga algo como: 19:47, 11:09, meio dia, etc.");
+    alert("Não consegui entender o horário. Diga algo como: 19:47, 11:09, meio dia...");
     return;
   }
 
   showConfirmation(text, date);
 }
 
-// ================= UI =================
 function showConfirmation(text, date) {
   confirmArea.classList.remove("hidden");
   confirmArea.innerHTML = "";
@@ -145,7 +128,7 @@ function showConfirmation(text, date) {
   });
 }
 
-// ================= DATA =================
+// ===== DADOS =====
 function addReminder(text, date, notifyBeforeMinutes) {
   const reminder = {
     id: Date.now(),
@@ -203,7 +186,7 @@ function renderList() {
   });
 }
 
-// ================= NOTIFY =================
+// ===== NOTIFICAÇÃO =====
 function checkReminders() {
   const now = Date.now();
 
@@ -223,6 +206,4 @@ function checkReminders() {
 }
 
 setInterval(checkReminders, 1000);
-
-// Inicial
 renderList();
