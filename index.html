@@ -3,79 +3,28 @@
 <head>
   <meta charset="UTF-8" />
   <title>Eron</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-
   <div class="app">
+    <header>
+      <h1>eron</h1>
+      <div id="clock"></div>
+    </header>
 
-    <div class="top">
-      <div class="logo">
-        <div class="star">✦</div>
-        <div class="name">eron</div>
+    <main>
+      <div class="mic-area">
+        <button id="micBtn">🎤</button>
+        <p id="status">Toque no microfone e fale seu lembrete</p>
       </div>
 
-      <div class="clock" id="clock">00:00:00</div>
-    </div>
+      <section id="confirmArea" class="hidden"></section>
 
-    <div class="list-container">
-      <h3>Próximos</h3>
-      <div id="listSoon" class="list"></div>
-
-      <h3>Futuros</h3>
-      <div id="listLater" class="list"></div>
-    </div>
-
-    <div class="bottom">
-      <button id="micButton" class="mic-button">
-        🎤 Falar agora
-      </button>
-
-      <div class="privacy">
-        Só você terá acesso isso.
-      </div>
-    </div>
-
-  </div>
-
-  <!-- Modal de confirmação -->
-  <div id="confirmModal" class="modal hidden">
-    <div class="modal-content">
-      <h3>Confirmar lembrete?</h3>
-      <p id="confirmText"></p>
-      <p id="confirmDate"></p>
-
-      <div class="notify-options">
-        <button data-min="30">30 min antes</button>
-        <button data-min="60">1 hora antes</button>
-        <button data-min="1440">1 dia antes</button>
-      </div>
-
-      <div class="modal-actions">
-        <button id="cancelBtn">❌ Excluir</button>
-        <button id="confirmBtn">✅ Confirmar</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Modal de detalhes -->
-  <div id="detailModal" class="modal hidden">
-    <div class="modal-content">
-      <h3>Detalhes do lembrete</h3>
-      <p id="detailText"></p>
-      <p id="detailDate"></p>
-
-      <div class="notify-options">
-        <button data-add="30">Adiar 30 min</button>
-        <button data-add="60">Adiar 1 hora</button>
-        <button data-add="1440">Adiar 1 dia</button>
-      </div>
-
-      <div class="modal-actions">
-        <button id="closeDetailBtn">Fechar</button>
-      </div>
-    </div>
+      <section class="list">
+        <h2>Próximos compromissos</h2>
+        <div id="reminderList"></div>
+      </section>
+    </main>
   </div>
 
   <script src="script.js"></script>
