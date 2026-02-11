@@ -10,24 +10,35 @@
   <div class="phone">
     <div class="screen">
       <header class="top">
-        <span class="logo">eron</span>
-        <span id="clock" class="clock"></span>
+        <div class="status-left">09:54</div>
+        <div class="brand">
+          <div class="star">✦</div>
+          <div class="name">eron</div>
+        </div>
+        <div class="status-right">📶 🔋</div>
       </header>
 
-      <div class="center-area">
-        <!-- Botão de microfone (posição inferior, como você pediu) -->
-        <button id="micBtn" class="mic">🎤</button>
-        <div id="status" class="status">Toque no microfone e fale seu lembrete</div>
+      <!-- Área central vazia (como na imagem) -->
+      <div class="spacer"></div>
+
+      <!-- Botão de falar (mais embaixo) -->
+      <div class="talk-area">
+        <button id="micBtn" class="talk-btn">
+          <span class="mic">🎤</span>
+          <span>Falar agora</span>
+        </button>
+        <div id="status" class="hint">Toque e fale seu lembrete</div>
       </div>
 
-      <!-- Área de confirmação (aparece na tela do app, não é do navegador) -->
+      <!-- Confirmação em tela -->
       <section id="confirmArea" class="confirm hidden"></section>
 
       <!-- Lista de compromissos -->
       <section class="list">
-        <h2>Compromissos</h2>
         <div id="reminderList"></div>
       </section>
+
+      <footer class="privacy">Só você terá acesso isso.</footer>
     </div>
   </div>
 
