@@ -4,99 +4,90 @@ const statusEl = document.getElementById("status");
 const confirmArea = document.getElementById("confirmArea");
 const reminderList = document.getElementById("reminderList");
 
-// ================== LOGIN LOCAL ==================
+// ================== AUTH LOCAL ==================
 let currentUser = localStorage.getItem("eron_current_user");
 
 function getUsers() {
-  return JSON.parse(localStorage.getItem("eron_users") || "[]");
+  return JSON.parse(localStorage.getItem("eron_users") || "{}");
 }
 
 function saveUsers(users) {
   localStorage.setItem("eron_users", JSON.stringify(users));
 }
 
-function getRemindersKey() {
-  return currentUser ? `eron_reminders_${currentUser}` : "eron_reminders_guest";
-}
+function showLogin() {
+  const overlay = document.createElement("div");
+  overlay.style.position = "fixed";
+  overlay.style.inset = "0";
+  overlay.style.background = "#f5f2ee";
+  overlay.style.display = "flex";
+  overlay.style.flexDirection = "column";
+  overlay.style.justifyContent = "center";
+  overlay.style.alignItems = "center";
+  overlay.style.zIndex = "9999";
+  overlay.innerHTML = `
+    <h2 style="margin-bottom:10px;">Entrar no Eron</h2>
+    <input id="loginUser" placeholder="Usuário" style="padding:10px;margin:5px;border-radius:8px;border:1px solid #ccc;">
+    <input id="loginPass" type="password" placeholder="Senha" style="padding:10px;margin:5px;border-radius:8px;border:1px solid #ccc;">
+    <button id="btnLogin" style="padding:10px 20px;margin-top:10px;border-radius:999px;border:none;background:#ede9e4;">Entrar / Cadastrar</button>
+    <p style="font-size:12px;opacity:.7;margin-top:10px;">Se não existir, a conta será criada.</p>
+  `;
+  document.body.appendChild(overlay);
 
-function loadReminders() {
-  return JSON.parse(localStorage.getItem(getRemindersKey()) || "[]");
-}
-
-function saveReminders() {
-  localStorage.setItem(getRemindersKey(), JSON.stringify(reminders));
-}
-
-// Tela simples de login/cadastro (prompt mesmo, sem mexer no HTML)
-function requireLogin() {
-  if (currentUser) return;
-
-  let choice = prompt("Digite:\n1 para Login\n2 para Cadastro");
-
-  if (choice === "2") {
-    const user = prompt("Crie um usuário:");
-    const pass = prompt("Crie uma senha:");
-
-    if (!user || !pass) {
-      alert("Usuário e senha inválidos.");
-      requireLogin();
+  document.getElementById("btnLogin").onclick = () => {
+    const u = document.getElementById("loginUser").value.trim();
+    const p = document.getElementById("loginPass").value.trim();
+    if (!u || !p) {
+      alert("Preencha usuário e senha");
       return;
     }
 
-    let users = getUsers();
-    if (users.find(u => u.user === user)) {
-      alert("Usuário já existe.");
-      requireLogin();
-      return;
+    const users = getUsers();
+    if (!users[u]) {
+      users[u] = { password: p };
+      saveUsers(users);
+    } else {
+      if (users[u].password !== p) {
+        alert("Senha incorreta");
+        return;
+      }
     }
 
-    users.push({ user, pass });
-    saveUsers(users);
-    localStorage.setItem("eron_current_user", user);
-    currentUser = user;
-    alert("Cadastro realizado! Você está logado.");
-  } else {
-    const user = prompt("Usuário:");
-    const pass = prompt("Senha:");
-
-    let users = getUsers();
-    const found = users.find(u => u.user === user && u.pass === pass);
-
-    if (!found) {
-      alert("Login inválido.");
-      requireLogin();
-      return;
-    }
-
-    localStorage.setItem("eron_current_user", user);
-    currentUser = user;
-    alert("Login realizado!");
-  }
+    localStorage.setItem("eron_current_user", u);
+    currentUser = u;
+    overlay.remove();
+    loadReminders();
+  };
 }
 
-requireLogin();
+if (!currentUser) {
+  showLogin();
+}
 
 // ================== DADOS ==================
-let reminders = loadReminders();
+let reminders = [];
 
-// ================== NOTIFICAÇÕES DO SISTEMA ==================
-function requestNotificationPermission() {
-  if (!("Notification" in window)) {
-    console.log("Notificações não suportadas.");
-    return;
-  }
+function loadReminders() {
+  if (!currentUser) return;
+  reminders = JSON.parse(localStorage.getItem("eron_reminders_" + currentUser) || "[]");
+  renderList();
+}
 
-  if (Notification.permission === "default") {
+function saveAndRender() {
+  reminders.sort((a, b) => a.time - b.time);
+  localStorage.setItem("eron_reminders_" + currentUser, JSON.stringify(reminders));
+  renderList();
+}
+
+// ================== NOTIFICAÇÕES ==================
+if ("Notification" in window) {
+  if (Notification.permission !== "granted") {
     Notification.requestPermission();
   }
 }
 
-requestNotificationPermission();
-
-function sendSystemNotification(title, body) {
-  if (!("Notification" in window)) return;
-
-  if (Notification.permission === "granted") {
+function sendNotification(title, body) {
+  if ("Notification" in window && Notification.permission === "granted") {
     new Notification(title, { body });
   }
 }
@@ -111,7 +102,7 @@ if ("webkitSpeechRecognition" in window || "SpeechRecognition" in window) {
   recognition.continuous = false;
   recognition.interimResults = false;
 } else {
-  statusEl.textContent = "Reconhecimento de voz não suportado neste navegador.";
+  statusEl.textContent = "Reconhecimento de voz não suportado.";
 }
 
 micBtn.addEventListener("click", () => {
@@ -122,9 +113,7 @@ micBtn.addEventListener("click", () => {
   statusEl.textContent = "Ouvindo...";
   try {
     recognition.start();
-  } catch (e) {
-    console.log(e);
-  }
+  } catch (e) {}
 });
 
 if (recognition) {
@@ -135,7 +124,7 @@ if (recognition) {
   };
 
   recognition.onerror = () => {
-    statusEl.textContent = "Erro ao reconhecer voz. Verifique a permissão do microfone.";
+    statusEl.textContent = "Erro ao reconhecer voz.";
   };
 }
 
@@ -180,14 +169,14 @@ function parseDateTime(text) {
 // ================== FLUXO ==================
 function handleSpokenText(text) {
   if (!text || text.trim().length === 0) {
-    alert("Não consegui entender o que você disse.");
+    alert("Não consegui entender.");
     return;
   }
 
   const date = parseDateTime(text);
 
   if (!date) {
-    alert("Não consegui entender o horário. Diga algo como: 19:47, 11:09, meio dia, amanhã 14:30...");
+    alert("Diga um horário como: 19:47, 11:09, meio dia, amanhã 14:30...");
     return;
   }
 
@@ -237,7 +226,7 @@ function showConfirmation(text, date) {
   });
 }
 
-// ================== DADOS ==================
+// ================== LEMBRETES ==================
 function addReminder(text, date, notifyBeforeMinutes) {
   const reminder = {
     id: Date.now(),
@@ -251,19 +240,12 @@ function addReminder(text, date, notifyBeforeMinutes) {
   saveAndRender();
 }
 
-function saveAndRender() {
-  reminders.sort((a, b) => a.time - b.time);
-  saveReminders();
-  renderList();
-}
-
 function renderList() {
   reminderList.innerHTML = "";
 
   reminders.forEach(rem => {
     const card = document.createElement("div");
     card.className = "card";
-
     const date = new Date(rem.time);
 
     card.innerHTML = `
@@ -295,30 +277,27 @@ function renderList() {
   });
 }
 
-// ================== NOTIFICAÇÃO / RELÓGIO ==================
+// ================== CHECK TEMPO ==================
 function checkReminders() {
   const now = Date.now();
 
   reminders.forEach(rem => {
     let triggerTime = rem.time;
-
     if (rem.notifyBeforeMinutes) {
       triggerTime = rem.time - rem.notifyBeforeMinutes * 60 * 1000;
     }
 
     if (!rem.notified && now >= triggerTime) {
       rem.notified = true;
-
-      // Notificação do sistema
-      sendSystemNotification("⏰ Lembrete", rem.text);
-
-      // Fallback
-      alert("⏰ Lembrete: " + rem.text);
-
+      sendNotification("⏰ Eron", rem.text);
       saveAndRender();
     }
   });
 }
 
 setInterval(checkReminders, 1000);
-renderList();
+
+// ================== INIT ==================
+if (currentUser) {
+  loadReminders();
+}
