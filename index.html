@@ -3,28 +3,32 @@
 <head>
   <meta charset="UTF-8" />
   <title>Eron</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div class="app">
-    <header>
-      <h1>eron</h1>
-      <div id="clock"></div>
-    </header>
+  <div class="phone">
+    <div class="screen">
+      <header class="top">
+        <span class="logo">eron</span>
+        <span id="clock" class="clock"></span>
+      </header>
 
-    <main>
-      <div class="mic-area">
-        <button id="micBtn">🎤</button>
-        <p id="status">Toque no microfone e fale seu lembrete</p>
+      <div class="center-area">
+        <!-- Botão de microfone (posição inferior, como você pediu) -->
+        <button id="micBtn" class="mic">🎤</button>
+        <div id="status" class="status">Toque no microfone e fale seu lembrete</div>
       </div>
 
-      <section id="confirmArea" class="hidden"></section>
+      <!-- Área de confirmação (aparece na tela do app, não é do navegador) -->
+      <section id="confirmArea" class="confirm hidden"></section>
 
+      <!-- Lista de compromissos -->
       <section class="list">
-        <h2>Próximos compromissos</h2>
+        <h2>Compromissos</h2>
         <div id="reminderList"></div>
       </section>
-    </main>
+    </div>
   </div>
 
   <script src="script.js"></script>
