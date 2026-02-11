@@ -4,18 +4,22 @@
   <meta charset="UTF-8" />
   <title>Eron</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#f5f2ee">
+
+  <!-- Estilo -->
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <div class="phone">
     <div class="screen">
       <header class="top">
-        <div class="status-left">09:54</div>
         <div class="brand">
           <div class="star">✦</div>
           <div class="name">eron</div>
         </div>
-        <div class="status-right">📶 🔋</div>
       </header>
 
       <!-- Área central vazia (como na imagem) -->
@@ -42,6 +46,14 @@
     </div>
   </div>
 
+  <!-- Script principal -->
   <script src="script.js"></script>
+
+  <!-- Registro do Service Worker (para instalar como app) -->
+  <script>
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("./sw.js");
+    }
+  </script>
 </body>
 </html>
