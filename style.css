@@ -12,6 +12,7 @@ body {
   min-height: 100vh;
 }
 
+/* ===== CONTAINER PHONE ===== */
 .phone {
   width: 390px;
   max-width: 100%;
@@ -29,12 +30,13 @@ body {
   flex-direction: column;
 }
 
-/* Topo só com logo */
+/* ===== TOPO ===== */
 .top {
   display: flex;
   justify-content: center;
   align-items: center;
   margin-bottom: 8px;
+  position: relative;
 }
 
 .brand {
@@ -52,12 +54,23 @@ body {
   color: #4b5563;
 }
 
-/* Espaço central vazio */
+/* Botão menu */
+.menu-btn {
+  position: absolute;
+  right: 0;
+  top: 0;
+  border: none;
+  background: transparent;
+  font-size: 22px;
+  cursor: pointer;
+}
+
+/* ===== ESPAÇO CENTRAL ===== */
 .spacer {
   flex: 1;
 }
 
-/* Botão falar */
+/* ===== BOTÃO FALAR ===== */
 .talk-area {
   display: flex;
   flex-direction: column;
@@ -93,17 +106,106 @@ body {
   opacity: 0.7;
 }
 
-/* Confirmação e lista */
+/* ===== TELAS ===== */
 .hidden {
   display: none;
 }
 
+/* ===== LOGIN / CADASTRO ===== */
+.auth-screen {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 20px;
+}
+
+.auth-screen h2 {
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+.auth-screen input {
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+}
+
+.password-row {
+  display: flex;
+  gap: 6px;
+}
+
+.password-row input {
+  flex: 1;
+}
+
+.password-row button {
+  border: none;
+  border-radius: 10px;
+  padding: 0 12px;
+  cursor: pointer;
+  background: #ede9e4;
+}
+
+.auth-screen button.main {
+  margin-top: 10px;
+  padding: 12px;
+  border-radius: 999px;
+  border: none;
+  background: #ede9e4;
+  font-size: 15px;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+}
+
+.auth-screen p {
+  font-size: 13px;
+  text-align: center;
+}
+
+.auth-screen a {
+  color: #374151;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* ===== MENU LATERAL ===== */
+.side-menu {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 70%;
+  height: 100%;
+  background: #f1ede8;
+  box-shadow: -4px 0 12px rgba(0,0,0,0.2);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  z-index: 10;
+}
+
+.side-menu h3 {
+  margin: 0 0 10px 0;
+}
+
+.side-menu button {
+  padding: 10px;
+  border-radius: 10px;
+  border: none;
+  background: #ede9e4;
+  cursor: pointer;
+  text-align: left;
+}
+
+/* ===== CONFIRMAÇÃO E LISTA ===== */
 .confirm,
 .list {
   margin-top: 10px;
 }
 
-/* Cards */
+/* ===== CARDS ===== */
 .card {
   background: #f1ede8;
   border-radius: 14px;
@@ -139,13 +241,13 @@ body {
   font-size: 12px;
 }
 
-/* Botões */
+/* ===== BOTÕES ===== */
 .btn-confirm { background: #22c55e; color: #064e3b; }
 .btn-delete  { background: #ef4444; color: #ffffff; }
 .btn-delay   { background: #eab308; color: #3f2d00; }
 .btn-view    { background: #3b82f6; color: #ffffff; }
 
-/* Rodapé */
+/* ===== RODAPÉ ===== */
 .privacy {
   text-align: center;
   font-size: 12px;
