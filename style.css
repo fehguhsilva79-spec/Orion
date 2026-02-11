@@ -1,139 +1,96 @@
 * {
   box-sizing: border-box;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-family: Arial, sans-serif;
 }
 
 body {
   margin: 0;
-  padding: 0;
-  background: linear-gradient(180deg, #f7f3ee, #f2eee9);
-  min-height: 100vh;
+  background: #0f172a;
+  color: #fff;
 }
 
 .app {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  padding: 40px 24px 60px 24px;
-}
-
-.top {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-}
-
-.logo {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  color: #6b5a3c;
-}
-
-.star { font-size: 28px; }
-.name { font-size: 28px; letter-spacing: 2px; }
-
-.clock {
-  font-size: 20px;
-  color: #6b5a3c;
-  font-weight: 500;
-}
-
-.list-container {
-  flex: 1;
-  overflow-y: auto;
-  margin-top: 20px;
-}
-
-.list-container h3 {
-  color: #6b5a3c;
-  margin-bottom: 8px;
-}
-
-.list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-bottom: 20px;
-}
-
-.reminder-item {
-  background: rgba(255,255,255,0.8);
-  border-radius: 12px;
-  padding: 12px;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-  cursor: pointer;
-}
-
-.reminder-item small {
-  color: #777;
-}
-
-.bottom {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 20px;
-  margin-bottom: 20px;
-}
-
-.mic-button {
-  width: 100%;
   max-width: 420px;
-  background: rgba(255,255,255,0.8);
-  border: none;
-  border-radius: 999px;
+  margin: 0 auto;
   padding: 16px;
-  font-size: 18px;
-  cursor: pointer;
-  box-shadow: 0 6px 16px rgba(0,0,0,0.08);
 }
 
-.privacy {
-  font-size: 13px;
-  color: #777;
-}
-
-/* ===== Modais ===== */
-.modal {
-  position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0,0,0,0.4);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 999;
-}
-
-.hidden { display: none; }
-
-.modal-content {
-  background: #fff;
-  border-radius: 12px;
-  padding: 20px;
-  width: 90%;
-  max-width: 400px;
-}
-
-.notify-options {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-  margin: 10px 0;
-}
-
-.notify-options button {
-  flex: 1;
-  padding: 10px;
-  border-radius: 8px;
-  border: none;
-  cursor: pointer;
-}
-
-.modal-actions {
+header {
   display: flex;
   justify-content: space-between;
-  margin-top: 10px;
+  align-items: center;
+}
+
+header h1 {
+  text-transform: lowercase;
+}
+
+#clock {
+  font-size: 14px;
+  opacity: 0.8;
+}
+
+.mic-area {
+  margin: 40px 0;
+  text-align: center;
+}
+
+#micBtn {
+  font-size: 48px;
+  padding: 20px 30px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  background: #22c55e;
+}
+
+#status {
+  margin-top: 12px;
+  font-size: 14px;
+  opacity: 0.8;
+}
+
+.hidden {
+  display: none;
+}
+
+.card {
+  background: #1e293b;
+  padding: 12px;
+  border-radius: 10px;
+  margin-bottom: 10px;
+}
+
+.card h3 {
+  margin: 0 0 6px 0;
+  font-size: 14px;
+}
+
+.card p {
+  margin: 0 0 8px 0;
+  font-size: 13px;
+  opacity: 0.9;
+}
+
+.card .actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.card button {
+  padding: 6px 10px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.btn-confirm { background: #22c55e; }
+.btn-delete { background: #ef4444; }
+.btn-delay { background: #eab308; }
+.btn-view { background: #3b82f6; }
+
+.list h2 {
+  font-size: 16px;
+  margin-bottom: 10px;
 }
