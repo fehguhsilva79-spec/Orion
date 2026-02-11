@@ -5,6 +5,13 @@
   <title>Eron</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#f5f2ee">
+
+  <!-- Ícone para iOS (opcional, mas recomendado) -->
+  <link rel="apple-touch-icon" href="icon-192.png">
+
   <!-- Estilo -->
   <link rel="stylesheet" href="style.css" />
 </head>
@@ -100,6 +107,14 @@
   <!-- Script principal -->
   <script src="script.js"></script>
 
+  <!-- Registro do Service Worker (PWA) -->
+  <script>
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("./sw.js")
+        .then(() => console.log("Service Worker registrado com sucesso"))
+        .catch(err => console.error("Erro ao registrar Service Worker:", err));
+    }
+  </script>
+
 </body>
 </html>
-
