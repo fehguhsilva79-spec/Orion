@@ -1,11 +1,107 @@
+// ================== ELEMENTOS ==================
 const micBtn = document.getElementById("micBtn");
 const statusEl = document.getElementById("status");
 const confirmArea = document.getElementById("confirmArea");
 const reminderList = document.getElementById("reminderList");
 
-let reminders = JSON.parse(localStorage.getItem("eron_reminders") || "[]");
+// ================== LOGIN LOCAL ==================
+let currentUser = localStorage.getItem("eron_current_user");
 
-// ===== SPEECH =====
+function getUsers() {
+  return JSON.parse(localStorage.getItem("eron_users") || "[]");
+}
+
+function saveUsers(users) {
+  localStorage.setItem("eron_users", JSON.stringify(users));
+}
+
+function getRemindersKey() {
+  return currentUser ? `eron_reminders_${currentUser}` : "eron_reminders_guest";
+}
+
+function loadReminders() {
+  return JSON.parse(localStorage.getItem(getRemindersKey()) || "[]");
+}
+
+function saveReminders() {
+  localStorage.setItem(getRemindersKey(), JSON.stringify(reminders));
+}
+
+// Tela simples de login/cadastro (prompt mesmo, sem mexer no HTML)
+function requireLogin() {
+  if (currentUser) return;
+
+  let choice = prompt("Digite:\n1 para Login\n2 para Cadastro");
+
+  if (choice === "2") {
+    const user = prompt("Crie um usuário:");
+    const pass = prompt("Crie uma senha:");
+
+    if (!user || !pass) {
+      alert("Usuário e senha inválidos.");
+      requireLogin();
+      return;
+    }
+
+    let users = getUsers();
+    if (users.find(u => u.user === user)) {
+      alert("Usuário já existe.");
+      requireLogin();
+      return;
+    }
+
+    users.push({ user, pass });
+    saveUsers(users);
+    localStorage.setItem("eron_current_user", user);
+    currentUser = user;
+    alert("Cadastro realizado! Você está logado.");
+  } else {
+    const user = prompt("Usuário:");
+    const pass = prompt("Senha:");
+
+    let users = getUsers();
+    const found = users.find(u => u.user === user && u.pass === pass);
+
+    if (!found) {
+      alert("Login inválido.");
+      requireLogin();
+      return;
+    }
+
+    localStorage.setItem("eron_current_user", user);
+    currentUser = user;
+    alert("Login realizado!");
+  }
+}
+
+requireLogin();
+
+// ================== DADOS ==================
+let reminders = loadReminders();
+
+// ================== NOTIFICAÇÕES DO SISTEMA ==================
+function requestNotificationPermission() {
+  if (!("Notification" in window)) {
+    console.log("Notificações não suportadas.");
+    return;
+  }
+
+  if (Notification.permission === "default") {
+    Notification.requestPermission();
+  }
+}
+
+requestNotificationPermission();
+
+function sendSystemNotification(title, body) {
+  if (!("Notification" in window)) return;
+
+  if (Notification.permission === "granted") {
+    new Notification(title, { body });
+  }
+}
+
+// ================== SPEECH ==================
 let recognition = null;
 
 if ("webkitSpeechRecognition" in window || "SpeechRecognition" in window) {
@@ -38,19 +134,16 @@ if (recognition) {
     handleSpokenText(text);
   };
 
-  recognition.onerror = (event) => {
-    console.error(event);
-    statusEl.textContent = "Erro ao reconhecer voz. Verifique permissão do microfone.";
+  recognition.onerror = () => {
+    statusEl.textContent = "Erro ao reconhecer voz. Verifique a permissão do microfone.";
   };
 }
 
-// ===== PARSE DATA/HORA =====
+// ================== PARSE DATA/HORA ==================
 function parseDateTime(text) {
   let t = text.toLowerCase();
-
   let date = new Date();
 
-  // Dia
   if (t.includes("depois de amanhã")) {
     date.setDate(date.getDate() + 2);
   } else if (t.includes("amanhã")) {
@@ -60,13 +153,11 @@ function parseDateTime(text) {
   let hour = null;
   let minute = null;
 
-  // Casos especiais
   if (t.includes("meio dia") || t.includes("meiodia")) {
     hour = 12; minute = 0;
   } else if (t.includes("meia noite") || t.includes("meianoite")) {
     hour = 0; minute = 0;
   } else {
-    // Formatos: 19:47, 19h47, 19:07, etc
     const match = t.match(/(\d{1,2})\s*[:h]\s*(\d{2})/);
     if (match) {
       hour = parseInt(match[1], 10);
@@ -74,13 +165,10 @@ function parseDateTime(text) {
     }
   }
 
-  if (hour === null || minute === null) {
-    return null;
-  }
+  if (hour === null || minute === null) return null;
 
   date.setHours(hour, minute, 0, 0);
 
-  // Se não falou "amanhã" e o horário já passou hoje, joga para amanhã
   const now = new Date();
   if (!t.includes("amanhã") && !t.includes("depois de amanhã") && date.getTime() < now.getTime()) {
     date.setDate(date.getDate() + 1);
@@ -89,7 +177,7 @@ function parseDateTime(text) {
   return date;
 }
 
-// ===== FLUXO =====
+// ================== FLUXO ==================
 function handleSpokenText(text) {
   if (!text || text.trim().length === 0) {
     alert("Não consegui entender o que você disse.");
@@ -149,7 +237,7 @@ function showConfirmation(text, date) {
   });
 }
 
-// ===== DADOS =====
+// ================== DADOS ==================
 function addReminder(text, date, notifyBeforeMinutes) {
   const reminder = {
     id: Date.now(),
@@ -165,7 +253,7 @@ function addReminder(text, date, notifyBeforeMinutes) {
 
 function saveAndRender() {
   reminders.sort((a, b) => a.time - b.time);
-  localStorage.setItem("eron_reminders", JSON.stringify(reminders));
+  saveReminders();
   renderList();
 }
 
@@ -207,7 +295,7 @@ function renderList() {
   });
 }
 
-// ===== NOTIFICAÇÃO =====
+// ================== NOTIFICAÇÃO / RELÓGIO ==================
 function checkReminders() {
   const now = Date.now();
 
@@ -220,7 +308,13 @@ function checkReminders() {
 
     if (!rem.notified && now >= triggerTime) {
       rem.notified = true;
+
+      // Notificação do sistema
+      sendSystemNotification("⏰ Lembrete", rem.text);
+
+      // Fallback
       alert("⏰ Lembrete: " + rem.text);
+
       saveAndRender();
     }
   });
