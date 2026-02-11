@@ -6,7 +6,8 @@ const reminderList = document.getElementById("reminderList");
 let reminders = JSON.parse(localStorage.getItem("eron_reminders") || "[]");
 
 // ===== SPEECH =====
-let recognition;
+let recognition = null;
+
 if ("webkitSpeechRecognition" in window || "SpeechRecognition" in window) {
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   recognition = new SpeechRecognition();
@@ -14,13 +15,20 @@ if ("webkitSpeechRecognition" in window || "SpeechRecognition" in window) {
   recognition.continuous = false;
   recognition.interimResults = false;
 } else {
-  alert("Seu navegador não suporta reconhecimento de voz.");
+  statusEl.textContent = "Reconhecimento de voz não suportado neste navegador.";
 }
 
 micBtn.addEventListener("click", () => {
-  if (!recognition) return;
+  if (!recognition) {
+    alert("Seu navegador não suporta reconhecimento de voz.");
+    return;
+  }
   statusEl.textContent = "Ouvindo...";
-  recognition.start();
+  try {
+    recognition.start();
+  } catch (e) {
+    console.log(e);
+  }
 });
 
 if (recognition) {
@@ -30,8 +38,9 @@ if (recognition) {
     handleSpokenText(text);
   };
 
-  recognition.onerror = () => {
-    statusEl.textContent = "Erro ao reconhecer voz.";
+  recognition.onerror = (event) => {
+    console.error(event);
+    statusEl.textContent = "Erro ao reconhecer voz. Verifique permissão do microfone.";
   };
 }
 
@@ -40,6 +49,8 @@ function parseDateTime(text) {
   let t = text.toLowerCase();
 
   let date = new Date();
+
+  // Dia
   if (t.includes("depois de amanhã")) {
     date.setDate(date.getDate() + 2);
   } else if (t.includes("amanhã")) {
@@ -49,24 +60,29 @@ function parseDateTime(text) {
   let hour = null;
   let minute = null;
 
+  // Casos especiais
   if (t.includes("meio dia") || t.includes("meiodia")) {
     hour = 12; minute = 0;
   } else if (t.includes("meia noite") || t.includes("meianoite")) {
     hour = 0; minute = 0;
   } else {
-    const match = t.match(/(\d{1,2})[:h](\d{2})/);
+    // Formatos: 19:47, 19h47, 19:07, etc
+    const match = t.match(/(\d{1,2})\s*[:h]\s*(\d{2})/);
     if (match) {
       hour = parseInt(match[1], 10);
       minute = parseInt(match[2], 10);
     }
   }
 
-  if (hour === null || minute === null) return null;
+  if (hour === null || minute === null) {
+    return null;
+  }
 
   date.setHours(hour, minute, 0, 0);
 
+  // Se não falou "amanhã" e o horário já passou hoje, joga para amanhã
   const now = new Date();
-  if (date.getTime() < now.getTime()) {
+  if (!t.includes("amanhã") && !t.includes("depois de amanhã") && date.getTime() < now.getTime()) {
     date.setDate(date.getDate() + 1);
   }
 
@@ -75,10 +91,15 @@ function parseDateTime(text) {
 
 // ===== FLUXO =====
 function handleSpokenText(text) {
+  if (!text || text.trim().length === 0) {
+    alert("Não consegui entender o que você disse.");
+    return;
+  }
+
   const date = parseDateTime(text);
 
   if (!date) {
-    alert("Não consegui entender o horário. Diga algo como: 19:47, 11:09, meio dia...");
+    alert("Não consegui entender o horário. Diga algo como: 19:47, 11:09, meio dia, amanhã 14:30...");
     return;
   }
 
