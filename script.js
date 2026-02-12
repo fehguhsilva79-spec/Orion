@@ -63,23 +63,34 @@ function logout() {
 // ================== TROCA DE TELAS ==================
 function showLoginScreen() {
   if (!loginScreen || !registerScreen || !appScreen) return;
+
   loginScreen.classList.remove("hidden");
   registerScreen.classList.add("hidden");
   appScreen.classList.add("hidden");
+
+  // Garante que o menu esteja fechado
+  if (sideMenu) sideMenu.classList.add("hidden");
 }
 
 function showRegisterScreen() {
   if (!loginScreen || !registerScreen || !appScreen) return;
+
   loginScreen.classList.add("hidden");
   registerScreen.classList.remove("hidden");
   appScreen.classList.add("hidden");
+
+  if (sideMenu) sideMenu.classList.add("hidden");
 }
 
 function showAppScreen() {
   if (!loginScreen || !registerScreen || !appScreen) return;
+
   loginScreen.classList.add("hidden");
   registerScreen.classList.add("hidden");
   appScreen.classList.remove("hidden");
+
+  // Sempre começa com menu fechado
+  if (sideMenu) sideMenu.classList.add("hidden");
 }
 
 // ================== MOSTRAR / OCULTAR SENHA ==================
