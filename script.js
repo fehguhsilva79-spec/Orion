@@ -34,62 +34,54 @@ const statusEl = $("status");
 const confirmArea = $("confirmArea");
 const reminderList = $("reminderList");
 
-// ================== UTIL AUTH ==================
+// ================== STORAGE ==================
+const USERS_KEY = "eron_users";
+const CURRENT_USER_KEY = "eron_current_user";
+
 function getUsers() {
   try {
-    return JSON.parse(localStorage.getItem("eron_users") || "{}");
+    return JSON.parse(localStorage.getItem(USERS_KEY)) || {};
   } catch {
     return {};
   }
 }
 
 function saveUsers(users) {
-  localStorage.setItem("eron_users", JSON.stringify(users));
+  localStorage.setItem(USERS_KEY, JSON.stringify(users));
 }
 
 function setCurrentUser(email) {
-  localStorage.setItem("eron_current_user", email);
+  localStorage.setItem(CURRENT_USER_KEY, email);
 }
 
 function getCurrentUser() {
-  return localStorage.getItem("eron_current_user");
+  return localStorage.getItem(CURRENT_USER_KEY);
 }
 
 function logout() {
-  localStorage.removeItem("eron_current_user");
+  localStorage.removeItem(CURRENT_USER_KEY);
   showLoginScreen();
 }
 
-// ================== TROCA DE TELAS ==================
+// ================== TELAS ==================
 function showLoginScreen() {
-  if (!loginScreen || !registerScreen || !appScreen) return;
-
   loginScreen.classList.remove("hidden");
   registerScreen.classList.add("hidden");
   appScreen.classList.add("hidden");
-
-  // Garante que o menu esteja fechado
   if (sideMenu) sideMenu.classList.add("hidden");
 }
 
 function showRegisterScreen() {
-  if (!loginScreen || !registerScreen || !appScreen) return;
-
   loginScreen.classList.add("hidden");
   registerScreen.classList.remove("hidden");
   appScreen.classList.add("hidden");
-
   if (sideMenu) sideMenu.classList.add("hidden");
 }
 
 function showAppScreen() {
-  if (!loginScreen || !registerScreen || !appScreen) return;
-
   loginScreen.classList.add("hidden");
   registerScreen.classList.add("hidden");
   appScreen.classList.remove("hidden");
-
-  // Sempre começa com menu fechado
   if (sideMenu) sideMenu.classList.add("hidden");
 }
 
@@ -100,109 +92,102 @@ window.togglePassword = function (id) {
   input.type = input.type === "password" ? "text" : "password";
 };
 
-// ================== EVENTOS AUTH ==================
-if (goToRegister) {
-  goToRegister.onclick = (e) => {
-    e.preventDefault();
-    showRegisterScreen();
-  };
-}
+// ================== NAVEGAÇÃO AUTH ==================
+goToRegister.onclick = (e) => {
+  e.preventDefault();
+  showRegisterScreen();
+};
 
-if (goToLogin) {
-  goToLogin.onclick = (e) => {
-    e.preventDefault();
-    showLoginScreen();
-  };
-}
+goToLogin.onclick = (e) => {
+  e.preventDefault();
+  showLoginScreen();
+};
 
-if (loginBtn) {
-  loginBtn.onclick = () => {
-    const email = loginEmail.value.trim().toLowerCase();
-    const password = loginPassword.value;
+// ================== LOGIN ==================
+loginBtn.onclick = () => {
+  const email = loginEmail.value.trim().toLowerCase();
+  const password = loginPassword.value;
 
-    if (!email || !password) {
-      alert("Preencha email e senha.");
-      return;
-    }
+  if (!email || !password) {
+    alert("Preencha email e senha.");
+    return;
+  }
 
-    const users = getUsers();
+  const users = getUsers();
 
-    if (!users[email]) {
-      alert("Conta não encontrada. Crie uma conta.");
-      return;
-    }
+  if (!users[email]) {
+    alert("Conta não encontrada. Crie uma conta.");
+    return;
+  }
 
-    if (users[email].password !== password) {
-      alert("Senha incorreta.");
-      return;
-    }
+  if (users[email].password !== password) {
+    alert("Senha incorreta.");
+    return;
+  }
 
-    setCurrentUser(email);
-    initApp();
-  };
-}
+  setCurrentUser(email);
+  initApp();
+};
 
-if (registerBtn) {
-  registerBtn.onclick = () => {
-    const email = registerEmail.value.trim().toLowerCase();
-    const password = registerPassword.value;
-    const confirm = registerPasswordConfirm.value;
+// ================== CADASTRO ==================
+registerBtn.onclick = () => {
+  const email = registerEmail.value.trim().toLowerCase();
+  const password = registerPassword.value;
+  const confirm = registerPasswordConfirm.value;
 
-    if (!email || !password || !confirm) {
-      alert("Preencha todos os campos.");
-      return;
-    }
+  if (!email || !password || !confirm) {
+    alert("Preencha todos os campos.");
+    return;
+  }
 
-    if (password !== confirm) {
-      alert("As senhas não coincidem.");
-      return;
-    }
+  if (password !== confirm) {
+    alert("As senhas não coincidem.");
+    return;
+  }
 
-    const users = getUsers();
+  const users = getUsers();
 
-    if (users[email]) {
-      alert("Este email já está cadastrado.");
-      return;
-    }
+  if (users[email]) {
+    alert("Este email já está cadastrado.");
+    return;
+  }
 
-    users[email] = { password };
-    saveUsers(users);
+  users[email] = { password };
+  saveUsers(users);
 
-    alert("Conta criada com sucesso! Faça login.");
-    showLoginScreen();
-  };
-}
+  alert("Conta criada com sucesso! Faça login.");
+  showLoginScreen();
+};
 
 // ================== MENU ==================
-if (menuBtn && sideMenu) {
-  menuBtn.onclick = () => {
-    sideMenu.classList.toggle("hidden");
-  };
-}
+menuBtn.onclick = () => {
+  sideMenu.classList.toggle("hidden");
+};
 
-if (logoutBtn) {
-  logoutBtn.onclick = () => {
-    logout();
-  };
-}
+logoutBtn.onclick = () => {
+  logout();
+};
 
-// ================== DADOS DE LEMBRETES ==================
+// ================== LEMBRETES ==================
 let reminders = [];
 
 function loadReminders() {
   const user = getCurrentUser();
   if (!user) return;
+
   try {
-    reminders = JSON.parse(localStorage.getItem("eron_reminders_" + user) || "[]");
+    reminders = JSON.parse(localStorage.getItem("eron_reminders_" + user)) || [];
   } catch {
     reminders = [];
   }
+
   renderList();
 }
 
 function saveAndRender() {
   const user = getCurrentUser();
   if (!user) return;
+
   reminders.sort((a, b) => a.time - b.time);
   localStorage.setItem("eron_reminders_" + user, JSON.stringify(reminders));
   renderList();
@@ -232,80 +217,61 @@ if ("webkitSpeechRecognition" in window || "SpeechRecognition" in window) {
   statusEl.textContent = "Reconhecimento de voz não suportado.";
 }
 
-if (micBtn) {
-  micBtn.onclick = () => {
-    if (!recognition) {
-      alert("Seu navegador não suporta reconhecimento de voz.");
-      return;
-    }
-    statusEl.textContent = "Ouvindo...";
-    try {
-      recognition.start();
-    } catch (e) {}
-  };
-}
+micBtn.onclick = () => {
+  if (!recognition) {
+    alert("Seu navegador não suporta reconhecimento de voz.");
+    return;
+  }
+  statusEl.textContent = "Ouvindo...";
+  try {
+    recognition.start();
+  } catch {}
+};
 
 if (recognition) {
   recognition.onresult = (event) => {
     const text = event.results[0][0].transcript;
-    if (statusEl) statusEl.textContent = "Reconhecido";
+    statusEl.textContent = "Reconhecido";
     handleSpokenText(text);
   };
 
   recognition.onerror = () => {
-    if (statusEl) statusEl.textContent = "Erro ao reconhecer voz.";
+    statusEl.textContent = "Erro ao reconhecer voz.";
   };
 }
 
-// ================== PARSE DATA/HORA ==================
+// ================== DATA/HORA ==================
 function parseDateTime(text) {
   let t = text.toLowerCase();
   let date = new Date();
 
-  if (t.includes("depois de amanhã")) {
-    date.setDate(date.getDate() + 2);
-  } else if (t.includes("amanhã")) {
-    date.setDate(date.getDate() + 1);
-  }
+  if (t.includes("depois de amanhã")) date.setDate(date.getDate() + 2);
+  else if (t.includes("amanhã")) date.setDate(date.getDate() + 1);
 
   let hour = null;
   let minute = null;
 
-  if (t.includes("meio dia") || t.includes("meiodia")) {
-    hour = 12; minute = 0;
-  } else if (t.includes("meia noite") || t.includes("meianoite")) {
-    hour = 0; minute = 0;
-  } else {
-    const match = t.match(/(\d{1,2})\s*[:h]\s*(\d{2})/);
-    if (match) {
-      hour = parseInt(match[1], 10);
-      minute = parseInt(match[2], 10);
-    }
+  const match = t.match(/(\d{1,2})\s*[:h]\s*(\d{2})/);
+  if (match) {
+    hour = parseInt(match[1], 10);
+    minute = parseInt(match[2], 10);
   }
 
   if (hour === null || minute === null) return null;
 
   date.setHours(hour, minute, 0, 0);
 
-  const now = new Date();
-  if (!t.includes("amanhã") && !t.includes("depois de amanhã") && date.getTime() < now.getTime()) {
-    date.setDate(date.getDate() + 1);
-  }
+  if (date.getTime() < Date.now()) date.setDate(date.getDate() + 1);
 
   return date;
 }
 
 // ================== FLUXO ==================
 function handleSpokenText(text) {
-  if (!text || text.trim().length === 0) {
-    alert("Não consegui entender.");
-    return;
-  }
-
   const date = parseDateTime(text);
 
   if (!date) {
-    alert("Diga um horário como: 19:47, 11:09, meio dia, amanhã 14:30...");
+    alert("Diga um horário como: 14:30, 09:10...");
     return;
   }
 
@@ -313,8 +279,6 @@ function handleSpokenText(text) {
 }
 
 function showConfirmation(text, date) {
-  if (!confirmArea) return;
-
   confirmArea.classList.remove("hidden");
   confirmArea.innerHTML = "";
 
@@ -327,14 +291,14 @@ function showConfirmation(text, date) {
     <p><strong>O que:</strong> ${text}</p>
     <div class="actions">
       <button class="btn-confirm">Confirmar</button>
-      <button class="btn-delete">Excluir</button>
+      <button class="btn-delete">Cancelar</button>
     </div>
   `;
 
   confirmArea.appendChild(card);
 
   card.querySelector(".btn-confirm").onclick = () => {
-    addReminder(text, date, null);
+    addReminder(text, date);
     confirmArea.classList.add("hidden");
   };
 
@@ -343,23 +307,19 @@ function showConfirmation(text, date) {
   };
 }
 
-// ================== LEMBRETES ==================
-function addReminder(text, date, notifyBeforeMinutes) {
-  const reminder = {
+// ================== CRUD ==================
+function addReminder(text, date) {
+  reminders.push({
     id: Date.now(),
     text,
     time: date.getTime(),
-    notifyBeforeMinutes,
     notified: false
-  };
+  });
 
-  reminders.push(reminder);
   saveAndRender();
 }
 
 function renderList() {
-  if (!reminderList) return;
-
   reminderList.innerHTML = "";
 
   reminders.forEach(rem => {
@@ -389,12 +349,7 @@ function checkReminders() {
   const now = Date.now();
 
   reminders.forEach(rem => {
-    let triggerTime = rem.time;
-    if (rem.notifyBeforeMinutes) {
-      triggerTime = rem.time - rem.notifyBeforeMinutes * 60 * 1000;
-    }
-
-    if (!rem.notified && now >= triggerTime) {
+    if (!rem.notified && now >= rem.time) {
       rem.notified = true;
       sendNotification("⏰ Eron", rem.text);
       saveAndRender();
@@ -410,9 +365,6 @@ function initApp() {
   loadReminders();
 }
 
-const user = getCurrentUser();
-if (user) {
-  initApp();
-} else {
-  showLoginScreen();
-}
+const current = getCurrentUser();
+if (current) initApp();
+else showLoginScreen();
