@@ -1,8 +1,6 @@
 // ================== HELPERS ==================
 function $(id) {
-  const el = document.getElementById(id);
-  if (!el) console.warn("Elemento não encontrado:", id);
-  return el;
+  return document.getElementById(id);
 }
 
 // ================== TELAS ==================
@@ -34,36 +32,34 @@ const statusEl = $("status");
 const confirmArea = $("confirmArea");
 const reminderList = $("reminderList");
 
-// ================== STORAGE ==================
-const USERS_KEY = "eron_users";
-const CURRENT_USER_KEY = "eron_current_user";
-
+// ================== UTIL AUTH ==================
 function getUsers() {
   try {
-    return JSON.parse(localStorage.getItem(USERS_KEY)) || {};
+    const data = localStorage.getItem("eron_users");
+    return data ? JSON.parse(data) : {};
   } catch {
     return {};
   }
 }
 
 function saveUsers(users) {
-  localStorage.setItem(USERS_KEY, JSON.stringify(users));
+  localStorage.setItem("eron_users", JSON.stringify(users));
 }
 
 function setCurrentUser(email) {
-  localStorage.setItem(CURRENT_USER_KEY, email);
+  localStorage.setItem("eron_current_user", email);
 }
 
 function getCurrentUser() {
-  return localStorage.getItem(CURRENT_USER_KEY);
+  return localStorage.getItem("eron_current_user");
 }
 
 function logout() {
-  localStorage.removeItem(CURRENT_USER_KEY);
+  localStorage.removeItem("eron_current_user");
   showLoginScreen();
 }
 
-// ================== TELAS ==================
+// ================== TROCA DE TELAS ==================
 function showLoginScreen() {
   loginScreen.classList.remove("hidden");
   registerScreen.classList.add("hidden");
@@ -92,7 +88,7 @@ window.togglePassword = function (id) {
   input.type = input.type === "password" ? "text" : "password";
 };
 
-// ================== NAVEGAÇÃO AUTH ==================
+// ================== EVENTOS AUTH ==================
 goToRegister.onclick = (e) => {
   e.preventDefault();
   showRegisterScreen();
@@ -103,7 +99,6 @@ goToLogin.onclick = (e) => {
   showLoginScreen();
 };
 
-// ================== LOGIN ==================
 loginBtn.onclick = () => {
   const email = loginEmail.value.trim().toLowerCase();
   const password = loginPassword.value;
@@ -129,7 +124,6 @@ loginBtn.onclick = () => {
   initApp();
 };
 
-// ================== CADASTRO ==================
 registerBtn.onclick = () => {
   const email = registerEmail.value.trim().toLowerCase();
   const password = registerPassword.value;
@@ -168,7 +162,7 @@ logoutBtn.onclick = () => {
   logout();
 };
 
-// ================== LEMBRETES ==================
+// ================== DADOS DE LEMBRETES ==================
 let reminders = [];
 
 function loadReminders() {
@@ -176,7 +170,8 @@ function loadReminders() {
   if (!user) return;
 
   try {
-    reminders = JSON.parse(localStorage.getItem("eron_reminders_" + user)) || [];
+    const data = localStorage.getItem("eron_reminders_" + user);
+    reminders = data ? JSON.parse(data) : [];
   } catch {
     reminders = [];
   }
@@ -213,20 +208,22 @@ if ("webkitSpeechRecognition" in window || "SpeechRecognition" in window) {
   recognition.lang = "pt-BR";
   recognition.continuous = false;
   recognition.interimResults = false;
-} else if (statusEl) {
-  statusEl.textContent = "Reconhecimento de voz não suportado.";
+} else {
+  if (statusEl) statusEl.textContent = "Reconhecimento de voz não suportado.";
 }
 
-micBtn.onclick = () => {
-  if (!recognition) {
-    alert("Seu navegador não suporta reconhecimento de voz.");
-    return;
-  }
-  statusEl.textContent = "Ouvindo...";
-  try {
-    recognition.start();
-  } catch {}
-};
+if (micBtn) {
+  micBtn.onclick = () => {
+    if (!recognition) {
+      alert("Seu navegador não suporta reconhecimento de voz.");
+      return;
+    }
+    statusEl.textContent = "Ouvindo...";
+    try {
+      recognition.start();
+    } catch (e) {}
+  };
+}
 
 if (recognition) {
   recognition.onresult = (event) => {
@@ -240,38 +237,55 @@ if (recognition) {
   };
 }
 
-// ================== DATA/HORA ==================
+// ================== PARSE DATA/HORA ==================
 function parseDateTime(text) {
   let t = text.toLowerCase();
   let date = new Date();
 
-  if (t.includes("depois de amanhã")) date.setDate(date.getDate() + 2);
-  else if (t.includes("amanhã")) date.setDate(date.getDate() + 1);
+  if (t.includes("depois de amanhã")) {
+    date.setDate(date.getDate() + 2);
+  } else if (t.includes("amanhã")) {
+    date.setDate(date.getDate() + 1);
+  }
 
   let hour = null;
   let minute = null;
 
-  const match = t.match(/(\d{1,2})\s*[:h]\s*(\d{2})/);
-  if (match) {
-    hour = parseInt(match[1], 10);
-    minute = parseInt(match[2], 10);
+  if (t.includes("meio dia") || t.includes("meiodia")) {
+    hour = 12; minute = 0;
+  } else if (t.includes("meia noite") || t.includes("meianoite")) {
+    hour = 0; minute = 0;
+  } else {
+    const match = t.match(/(\d{1,2})\s*[:h]\s*(\d{2})/);
+    if (match) {
+      hour = parseInt(match[1], 10);
+      minute = parseInt(match[2], 10);
+    }
   }
 
   if (hour === null || minute === null) return null;
 
   date.setHours(hour, minute, 0, 0);
 
-  if (date.getTime() < Date.now()) date.setDate(date.getDate() + 1);
+  const now = new Date();
+  if (!t.includes("amanhã") && !t.includes("depois de amanhã") && date.getTime() < now.getTime()) {
+    date.setDate(date.getDate() + 1);
+  }
 
   return date;
 }
 
 // ================== FLUXO ==================
 function handleSpokenText(text) {
+  if (!text || text.trim().length === 0) {
+    alert("Não consegui entender.");
+    return;
+  }
+
   const date = parseDateTime(text);
 
   if (!date) {
-    alert("Diga um horário como: 14:30, 09:10...");
+    alert("Diga um horário como: 19:47, 11:09, meio dia, amanhã 14:30...");
     return;
   }
 
@@ -291,14 +305,14 @@ function showConfirmation(text, date) {
     <p><strong>O que:</strong> ${text}</p>
     <div class="actions">
       <button class="btn-confirm">Confirmar</button>
-      <button class="btn-delete">Cancelar</button>
+      <button class="btn-delete">Excluir</button>
     </div>
   `;
 
   confirmArea.appendChild(card);
 
   card.querySelector(".btn-confirm").onclick = () => {
-    addReminder(text, date);
+    addReminder(text, date, null);
     confirmArea.classList.add("hidden");
   };
 
@@ -307,15 +321,17 @@ function showConfirmation(text, date) {
   };
 }
 
-// ================== CRUD ==================
-function addReminder(text, date) {
-  reminders.push({
+// ================== LEMBRETES ==================
+function addReminder(text, date, notifyBeforeMinutes) {
+  const reminder = {
     id: Date.now(),
     text,
     time: date.getTime(),
+    notifyBeforeMinutes,
     notified: false
-  });
+  };
 
+  reminders.push(reminder);
   saveAndRender();
 }
 
@@ -349,7 +365,12 @@ function checkReminders() {
   const now = Date.now();
 
   reminders.forEach(rem => {
-    if (!rem.notified && now >= rem.time) {
+    let triggerTime = rem.time;
+    if (rem.notifyBeforeMinutes) {
+      triggerTime = rem.time - rem.notifyBeforeMinutes * 60 * 1000;
+    }
+
+    if (!rem.notified && now >= triggerTime) {
       rem.notified = true;
       sendNotification("⏰ Eron", rem.text);
       saveAndRender();
@@ -365,6 +386,10 @@ function initApp() {
   loadReminders();
 }
 
-const current = getCurrentUser();
-if (current) initApp();
-else showLoginScreen();
+// Boot
+const user = getCurrentUser();
+if (user) {
+  initApp();
+} else {
+  showLoginScreen();
+}
