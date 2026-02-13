@@ -2,14 +2,11 @@
   // ================== SUPABASE ==================
   const SUPABASE_URL = "https://qftffjgdoicyswgdtpld.supabase.co";
   const SUPABASE_KEY = "sb_publishable_dg5HKUTmMIhd2Glc8hVyaw_NEzRjFRo";
-
   const { createClient } = window.supabase;
   const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
 
   // ================== HELPERS ==================
-  function $(id) {
-    return document.getElementById(id);
-  }
+  function $(id) { return document.getElementById(id); }
 
   // ================== TELAS ==================
   const loginScreen = $("loginScreen");
@@ -82,25 +79,10 @@
     if (notificationsScreen) notificationsScreen.classList.add("hidden");
   }
 
-  function showHome() {
-    hideAllInternal();
-    if (mainHome) mainHome.classList.remove("hidden");
-  }
-
-  function showAccount() {
-    hideAllInternal();
-    if (accountScreen) accountScreen.classList.remove("hidden");
-  }
-
-  function showPlan() {
-    hideAllInternal();
-    if (planScreen) planScreen.classList.remove("hidden");
-  }
-
-  function showNotifications() {
-    hideAllInternal();
-    if (notificationsScreen) notificationsScreen.classList.remove("hidden");
-  }
+  function showHome() { hideAllInternal(); if (mainHome) mainHome.classList.remove("hidden"); }
+  function showAccount() { hideAllInternal(); if (accountScreen) accountScreen.classList.remove("hidden"); }
+  function showPlan() { hideAllInternal(); if (planScreen) planScreen.classList.remove("hidden"); }
+  function showNotifications() { hideAllInternal(); if (notificationsScreen) notificationsScreen.classList.remove("hidden"); }
 
   // ================== PASSWORD ==================
   window.togglePassword = function (id) {
@@ -110,31 +92,17 @@
   };
 
   // ================== AUTH EVENTS ==================
-  goToRegister.onclick = (e) => {
-    e.preventDefault();
-    showRegisterScreen();
-  };
-
-  goToLogin.onclick = (e) => {
-    e.preventDefault();
-    showLoginScreen();
-  };
+  goToRegister.onclick = (e) => { e.preventDefault(); showRegisterScreen(); };
+  goToLogin.onclick = (e) => { e.preventDefault(); showLoginScreen(); };
 
   loginBtn.onclick = async () => {
     const email = loginEmail.value.trim();
     const password = loginPassword.value;
 
-    if (!email || !password) {
-      alert("Preencha email e senha.");
-      return;
-    }
+    if (!email || !password) { alert("Preencha email e senha."); return; }
 
     const { error } = await sb.auth.signInWithPassword({ email, password });
-
-    if (error) {
-      alert("Erro ao entrar: " + error.message);
-      return;
-    }
+    if (error) { alert("Erro ao entrar: " + error.message); return; }
 
     initApp();
   };
@@ -144,29 +112,14 @@
     const password = registerPassword.value;
     const confirm = registerPasswordConfirm.value;
 
-    if (!email || !password || !confirm) {
-      alert("Preencha todos os campos.");
-      return;
-    }
-
-    if (password !== confirm) {
-      alert("As senhas não coincidem.");
-      return;
-    }
+    if (!email || !password || !confirm) { alert("Preencha todos os campos."); return; }
+    if (password !== confirm) { alert("As senhas não coincidem."); return; }
 
     const { data, error } = await sb.auth.signUp({ email, password });
-
-    if (error) {
-      alert("Erro ao criar conta: " + error.message);
-      return;
-    }
+    if (error) { alert("Erro ao criar conta: " + error.message); return; }
 
     if (data.user) {
-      await sb.from("profiles").insert({
-        id: data.user.id,
-        email: email,
-        is_premium: false
-      });
+      await sb.from("profiles").insert({ id: data.user.id, email: email, is_premium: false });
     }
 
     alert("Conta criada com sucesso! Faça login.");
@@ -176,23 +129,10 @@
   // ================== MENU ==================
   menuBtn.onclick = () => sideMenu.classList.toggle("hidden");
   logoutBtn.onclick = () => logout();
-
-  menuHome.onclick = () => {
-    showHome();
-    sideMenu.classList.add("hidden");
-  };
-  menuAccount.onclick = () => {
-    showAccount();
-    sideMenu.classList.add("hidden");
-  };
-  menuPlan.onclick = () => {
-    showPlan();
-    sideMenu.classList.add("hidden");
-  };
-  menuNotifications.onclick = () => {
-    showNotifications();
-    sideMenu.classList.add("hidden");
-  };
+  menuHome.onclick = () => { showHome(); sideMenu.classList.add("hidden"); };
+  menuAccount.onclick = () => { showAccount(); sideMenu.classList.add("hidden"); };
+  menuPlan.onclick = () => { showPlan(); sideMenu.classList.add("hidden"); };
+  menuNotifications.onclick = () => { showNotifications(); sideMenu.classList.add("hidden"); };
 
   // ================== LEMBRETES ==================
   let reminders = [];
@@ -207,10 +147,7 @@
       .eq("user_id", user.id)
       .order("datetime", { ascending: true });
 
-    if (error) {
-      console.error("Erro ao carregar lembretes:", error);
-      return;
-    }
+    if (error) { console.error("Erro ao carregar lembretes:", error); return; }
 
     reminders = data.map(r => ({
       id: r.id,
@@ -270,26 +207,33 @@
     recognition.lang = "pt-BR";
     recognition.interimResults = false;
 
+    // Função para extrair data/hora do texto usando chrono-node
+    function parseDateFromText(text) {
+      const results = chrono.parse(text, new Date(), { forwardDate: true });
+      if (results.length > 0) {
+        return results[0].start.date(); // retorna objeto Date
+      }
+      return null;
+    }
+
     micBtn.addEventListener("click", () => {
       statusEl.textContent = "Ouvindo... fale agora 🎤";
-      try {
-        recognition.start();
-      } catch (e) {
-        console.warn("Já está ouvindo...");
-      }
+      try { recognition.start(); } catch (e) { console.warn("Já está ouvindo..."); }
     });
 
     recognition.onresult = (event) => {
       const text = event.results[0][0].transcript;
       console.log("Você disse:", text);
-
       statusEl.textContent = "Você disse: " + text;
 
-      // Teste: agora + 1 hora
-      const date = new Date();
-      date.setHours(date.getHours() + 1);
+      const date = parseDateFromText(text);
 
-      if (confirm("Salvar este lembrete?\n\n" + text)) {
+      if (!date) {
+        alert("Não consegui entender a hora do lembrete. Tente falar novamente.");
+        return;
+      }
+
+      if (confirm("Salvar este lembrete?\n\n" + text + "\nPara: " + date.toLocaleString("pt-BR"))) {
         addReminder(text, date);
       }
     };
