@@ -9,7 +9,7 @@
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#f5f2ee">
 
-  <!-- Ícone para iOS (opcional, mas recomendado) -->
+  <!-- Ícone para iOS -->
   <link rel="apple-touch-icon" href="icon-192.png">
 
   <!-- Estilo -->
@@ -74,33 +74,53 @@
       <!-- Menu lateral -->
       <aside id="sideMenu" class="side-menu hidden">
         <h3>Configurações</h3>
-        <button id="accountBtn">Conta</button>
-        <button id="planBtn">Plano</button>
-        <button id="notificationsBtn">Notificações</button>
+        <button id="menuAccount">Conta</button>
+        <button id="menuPlan">Plano</button>
+        <button id="menuNotifications">Notificações</button>
         <button id="logoutBtn">Sair</button>
       </aside>
 
-      <!-- Área central vazia -->
-      <div class="spacer"></div>
+      <!-- ================= TELAS INTERNAS ================= -->
 
-      <!-- Botão de falar -->
-      <div class="talk-area">
-        <button id="micBtn" class="talk-btn">
-          <span class="mic">🎤</span>
-          <span>Falar agora</span>
-        </button>
-        <div id="status" class="hint">Toque e fale seu lembrete</div>
+      <!-- HOME (APP PRINCIPAL) -->
+      <div id="mainHome">
+        <div class="spacer"></div>
+
+        <div class="talk-area">
+          <button id="micBtn" class="talk-btn">
+            <span class="mic">🎤</span>
+            <span>Falar agora</span>
+          </button>
+          <div id="status" class="hint">Toque e fale seu lembrete</div>
+        </div>
+
+        <section id="confirmArea" class="confirm hidden"></section>
+
+        <section class="list">
+          <div id="reminderList"></div>
+        </section>
+
+        <footer class="privacy">Só você terá acesso a isso.</footer>
       </div>
 
-      <!-- Confirmação -->
-      <section id="confirmArea" class="confirm hidden"></section>
+      <!-- CONTA -->
+      <div id="accountScreen" class="hidden">
+        <h3>Minha Conta</h3>
+        <p>Aqui vão aparecer os dados da sua conta futuramente.</p>
+      </div>
 
-      <!-- Lista de lembretes -->
-      <section class="list">
-        <div id="reminderList"></div>
-      </section>
+      <!-- PLANO -->
+      <div id="planScreen" class="hidden">
+        <h3>Plano</h3>
+        <p>Aqui você poderá ver ou mudar seu plano.</p>
+      </div>
 
-      <footer class="privacy">Só você terá acesso a isso.</footer>
+      <!-- NOTIFICAÇÕES -->
+      <div id="notificationsScreen" class="hidden">
+        <h3>Notificações</h3>
+        <p>Configurações de notificações virão aqui.</p>
+      </div>
+
     </div>
   </div>
 
