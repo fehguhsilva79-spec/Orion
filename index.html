@@ -74,6 +74,7 @@
       <!-- Menu lateral -->
       <aside id="sideMenu" class="side-menu hidden">
         <h3>Configurações</h3>
+        <button id="menuHome">Início</button>
         <button id="menuAccount">Conta</button>
         <button id="menuPlan">Plano</button>
         <button id="menuNotifications">Notificações</button>
@@ -85,14 +86,6 @@
       <!-- HOME (APP PRINCIPAL) -->
       <div id="mainHome">
         <div class="spacer"></div>
-
-        <div class="talk-area">
-          <button id="micBtn" class="talk-btn">
-            <span class="mic">🎤</span>
-            <span>Falar agora</span>
-          </button>
-          <div id="status" class="hint">Toque e fale seu lembrete</div>
-        </div>
 
         <section id="confirmArea" class="confirm hidden"></section>
 
@@ -119,6 +112,17 @@
       <div id="notificationsScreen" class="hidden">
         <h3>Notificações</h3>
         <p>Configurações de notificações virão aqui.</p>
+      </div>
+
+      <!-- BOTÃO FIXO DO MICROFONE -->
+      <div class="talk-area-fixed">
+        <div class="talk-area">
+          <button id="micBtn" class="talk-btn">
+            <span class="mic">🎤</span>
+            <span>Falar agora</span>
+          </button>
+          <div id="status" class="hint">Toque e fale seu lembrete</div>
+        </div>
       </div>
 
     </div>
