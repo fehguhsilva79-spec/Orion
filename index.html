@@ -8,8 +8,6 @@
   <!-- PWA -->
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#f5f2ee">
-
-  <!-- Ícone para iOS -->
   <link rel="apple-touch-icon" href="icon-192.png">
 
   <!-- Estilo -->
@@ -71,7 +69,6 @@
         </div>
       </header>
 
-      <!-- Menu lateral -->
       <aside id="sideMenu" class="side-menu hidden">
         <h3>Configurações</h3>
         <button id="menuHome">Início</button>
@@ -81,40 +78,26 @@
         <button id="logoutBtn">Sair</button>
       </aside>
 
-      <!-- ================= TELAS INTERNAS ================= -->
-
-      <!-- HOME (APP PRINCIPAL) -->
       <div id="mainHome">
-        <div class="spacer"></div>
-
         <section id="confirmArea" class="confirm hidden"></section>
-
         <section class="list">
           <div id="reminderList"></div>
         </section>
-
         <footer class="privacy">Só você terá acesso a isso.</footer>
       </div>
 
-      <!-- CONTA -->
       <div id="accountScreen" class="hidden">
         <h3>Minha Conta</h3>
-        <p>Aqui vão aparecer os dados da sua conta futuramente.</p>
       </div>
 
-      <!-- PLANO -->
       <div id="planScreen" class="hidden">
         <h3>Plano</h3>
-        <p>Aqui você poderá ver ou mudar seu plano.</p>
       </div>
 
-      <!-- NOTIFICAÇÕES -->
       <div id="notificationsScreen" class="hidden">
         <h3>Notificações</h3>
-        <p>Configurações de notificações virão aqui.</p>
       </div>
 
-      <!-- BOTÃO FIXO DO MICROFONE -->
       <div class="talk-area-fixed">
         <div class="talk-area">
           <button id="micBtn" class="talk-btn">
@@ -128,22 +111,11 @@
     </div>
   </div>
 
-  <!-- ================= SCRIPTS ================= -->
-
-  <!-- Biblioteca do Supabase -->
+  <!-- ✅ SUPABASE SDK (OBRIGATÓRIO) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-  <!-- Seu script principal -->
+  <!-- Seu script -->
   <script src="script.js"></script>
-
-  <!-- Registro do Service Worker (PWA) -->
-  <script>
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("./sw.js")
-        .then(() => console.log("Service Worker registrado com sucesso"))
-        .catch(err => console.error("Erro ao registrar Service Worker:", err));
-    }
-  </script>
 
 </body>
 </html>
