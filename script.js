@@ -162,11 +162,13 @@
     }
 
     if (data.user) {
-      await sb.from("profiles").insert({
-        id: data.user.id,
-        email: email,
-        is_premium: false
-      });
+      await sb.from("profiles").insert([
+        {
+          id: data.user.id,
+          email: email,
+          is_premium: false
+        }
+      ]);
     }
 
     alert("Conta criada com sucesso! Faça login.");
@@ -203,12 +205,12 @@
 
     const { data, error } = await sb
       .from("reminders")
-      .select("*")
+      .select("id, text, datetime")
       .eq("user_id", user.id)
       .order("datetime", { ascending: true });
 
     if (error) {
-      console.error(error);
+      console.error("Erro ao carregar lembretes:", error);
       return;
     }
 
@@ -225,14 +227,17 @@
     const { data: { user } } = await sb.auth.getUser();
     if (!user) return;
 
-    const { error } = await sb.from("reminders").insert({
+    const payload = {
       user_id: user.id,
       text: text,
-      datetime: date.toISOString()
-    });
+      datetime: date.toISOString() // ISO para timestamptz
+    };
+
+    const { error } = await sb.from("reminders").insert([payload]); // ⚠️ TEM QUE SER ARRAY
 
     if (error) {
-      alert("Erro ao salvar lembrete");
+      console.error("Erro ao salvar lembrete:", error);
+      alert("Erro ao salvar lembrete: " + error.message);
       return;
     }
 
@@ -281,7 +286,7 @@
 
       statusEl.textContent = "Você disse: " + text;
 
-      // Por enquanto salva com data atual + 1 hora (teste)
+      // TESTE: agora + 1 hora
       const date = new Date();
       date.setHours(date.getHours() + 1);
 
