@@ -2,7 +2,14 @@
 const SUPABASE_URL = "https://qftffjgdoicyswgdtpld.supabase.co";
 const SUPABASE_KEY = "sb_publishable_dg5HKUTmMIhd2Glc8hVyaw_NEzRjFRo";
 
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+// Evita redeclarar o cliente se o script carregar mais de uma vez
+let supabaseClient = window._supabaseClient;
+if (!supabaseClient) {
+  const { createClient } = window.supabase;
+  supabaseClient = createClient(SUPABASE_URL, SUPABASE_KEY);
+  window._supabaseClient = supabaseClient;
+}
+const supabase = supabaseClient;
 
 // ================== HELPERS ==================
 function $(id) {
@@ -166,7 +173,6 @@ registerBtn.onclick = async () => {
     return;
   }
 
-  // Cria perfil
   if (data.user) {
     await supabase.from("profiles").insert({
       id: data.user.id,
@@ -254,17 +260,6 @@ async function addReminder(text, date) {
   loadReminders();
 }
 
-// ================== NOTIFICAÇÕES ==================
-if ("Notification" in window && Notification.permission !== "granted") {
-  Notification.requestPermission();
-}
-
-function sendNotification(title, body) {
-  if ("Notification" in window && Notification.permission === "granted") {
-    new Notification(title, { body });
-  }
-}
-
 // ================== SPEECH ==================
 let recognition = null;
 
@@ -274,8 +269,6 @@ if ("webkitSpeechRecognition" in window || "SpeechRecognition" in window) {
   recognition.lang = "pt-BR";
   recognition.continuous = false;
   recognition.interimResults = false;
-} else {
-  if (statusEl) statusEl.textContent = "Reconhecimento de voz não suportado.";
 }
 
 if (micBtn) {
