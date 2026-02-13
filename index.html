@@ -18,43 +18,29 @@
   <!-- ================= LOGIN ================= -->
   <div id="loginScreen" class="auth-screen">
     <h2>Entrar no Eron</h2>
-
     <input id="loginEmail" type="email" placeholder="Email" />
     <div class="password-field">
       <input id="loginPassword" type="password" placeholder="Senha" />
       <button type="button" onclick="togglePassword('loginPassword')">👁</button>
     </div>
-
     <button id="loginBtn">Entrar</button>
-
-    <p>
-      Não tem conta?
-      <a href="#" id="goToRegister">Criar conta</a>
-    </p>
+    <p>Não tem conta? <a href="#" id="goToRegister">Criar conta</a></p>
   </div>
 
   <!-- ================= CADASTRO ================= -->
   <div id="registerScreen" class="auth-screen hidden">
     <h2>Criar conta</h2>
-
     <input id="registerEmail" type="email" placeholder="Email" />
-
     <div class="password-field">
       <input id="registerPassword" type="password" placeholder="Senha" />
       <button type="button" onclick="togglePassword('registerPassword')">👁</button>
     </div>
-
     <div class="password-field">
       <input id="registerPasswordConfirm" type="password" placeholder="Confirmar senha" />
       <button type="button" onclick="togglePassword('registerPasswordConfirm')">👁</button>
     </div>
-
     <button id="registerBtn">Criar conta</button>
-
-    <p>
-      Já tem conta?
-      <a href="#" id="goToLogin">Voltar para login</a>
-    </p>
+    <p>Já tem conta? <a href="#" id="goToLogin">Voltar para login</a></p>
   </div>
 
   <!-- ================= APP ================= -->
@@ -111,10 +97,14 @@
     </div>
   </div>
 
-  <!-- ✅ SUPABASE SDK (OBRIGATÓRIO - TEM QUE VIR ANTES DO script.js) -->
+  <!-- ================= SCRIPTS ================= -->
+  <!-- Supabase SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-  <!-- ✅ SEU SCRIPT -->
+  <!-- Chrono-node (interpreta datas em linguagem natural) -->
+  <script src="https://cdn.jsdelivr.net/npm/chrono-node/dist/chrono.min.js"></script>
+
+  <!-- Seu script principal -->
   <script src="script.js"></script>
 
 </body>
