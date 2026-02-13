@@ -255,6 +255,51 @@
     });
   }
 
+  // ================== VOZ / MICROFONE ==================
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  let recognition = null;
+
+  if (!SpeechRecognition) {
+    statusEl.textContent = "Seu navegador não suporta reconhecimento de voz.";
+  } else {
+    recognition = new SpeechRecognition();
+    recognition.lang = "pt-BR";
+    recognition.interimResults = false;
+
+    micBtn.addEventListener("click", () => {
+      statusEl.textContent = "Ouvindo... fale agora 🎤";
+      try {
+        recognition.start();
+      } catch (e) {
+        console.warn("Já está ouvindo...");
+      }
+    });
+
+    recognition.onresult = (event) => {
+      const text = event.results[0][0].transcript;
+      console.log("Você disse:", text);
+
+      statusEl.textContent = "Você disse: " + text;
+
+      // Por enquanto salva com data atual + 1 hora (teste)
+      const date = new Date();
+      date.setHours(date.getHours() + 1);
+
+      if (confirm("Salvar este lembrete?\n\n" + text)) {
+        addReminder(text, date);
+      }
+    };
+
+    recognition.onerror = (event) => {
+      console.error("Erro no microfone:", event.error);
+      statusEl.textContent = "Erro ao acessar o microfone.";
+    };
+
+    recognition.onend = () => {
+      console.log("Reconhecimento finalizado");
+    };
+  }
+
   // ================== INIT ==================
   async function initApp() {
     showAppScreen();
@@ -268,4 +313,3 @@
   })();
 
 })();
-
