@@ -8,6 +8,12 @@ const loginScreen = $("loginScreen");
 const registerScreen = $("registerScreen");
 const appScreen = $("appScreen");
 
+// Telas internas do app
+const mainHome = $("mainHome");
+const accountScreen = $("accountScreen");
+const planScreen = $("planScreen");
+const notificationsScreen = $("notificationsScreen");
+
 // Login
 const loginEmail = $("loginEmail");
 const loginPassword = $("loginPassword");
@@ -25,6 +31,11 @@ const goToLogin = $("goToLogin");
 const menuBtn = $("menuBtn");
 const sideMenu = $("sideMenu");
 const logoutBtn = $("logoutBtn");
+
+// Botões do menu
+const menuAccount = $("menuAccount");
+const menuPlan = $("menuPlan");
+const menuNotifications = $("menuNotifications");
 
 // App
 const micBtn = $("micBtn");
@@ -59,7 +70,7 @@ function logout() {
   showLoginScreen();
 }
 
-// ================== TROCA DE TELAS ==================
+// ================== TROCA DE TELAS PRINCIPAIS ==================
 function showLoginScreen() {
   loginScreen.classList.remove("hidden");
   registerScreen.classList.add("hidden");
@@ -79,6 +90,35 @@ function showAppScreen() {
   registerScreen.classList.add("hidden");
   appScreen.classList.remove("hidden");
   if (sideMenu) sideMenu.classList.add("hidden");
+  showHome(); // Sempre começa na Home
+}
+
+// ================== TROCA DE TELAS INTERNAS ==================
+function hideAllInternal() {
+  if (mainHome) mainHome.classList.add("hidden");
+  if (accountScreen) accountScreen.classList.add("hidden");
+  if (planScreen) planScreen.classList.add("hidden");
+  if (notificationsScreen) notificationsScreen.classList.add("hidden");
+}
+
+function showHome() {
+  hideAllInternal();
+  if (mainHome) mainHome.classList.remove("hidden");
+}
+
+function showAccount() {
+  hideAllInternal();
+  if (accountScreen) accountScreen.classList.remove("hidden");
+}
+
+function showPlan() {
+  hideAllInternal();
+  if (planScreen) planScreen.classList.remove("hidden");
+}
+
+function showNotifications() {
+  hideAllInternal();
+  if (notificationsScreen) notificationsScreen.classList.remove("hidden");
 }
 
 // ================== MOSTRAR / OCULTAR SENHA ==================
@@ -160,6 +200,22 @@ menuBtn.onclick = () => {
 
 logoutBtn.onclick = () => {
   logout();
+};
+
+// Navegação do menu
+menuAccount.onclick = () => {
+  showAccount();
+  sideMenu.classList.add("hidden");
+};
+
+menuPlan.onclick = () => {
+  showPlan();
+  sideMenu.classList.add("hidden");
+};
+
+menuNotifications.onclick = () => {
+  showNotifications();
+  sideMenu.classList.add("hidden");
 };
 
 // ================== DADOS DE LEMBRETES ==================
