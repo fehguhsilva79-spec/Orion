@@ -162,13 +162,11 @@
     }
 
     if (data.user) {
-      await sb.from("profiles").insert([
-        {
-          id: data.user.id,
-          email: email,
-          is_premium: false
-        }
-      ]);
+      await sb.from("profiles").insert({
+        id: data.user.id,
+        email: email,
+        is_premium: false
+      });
     }
 
     alert("Conta criada com sucesso! Faça login.");
@@ -205,7 +203,7 @@
 
     const { data, error } = await sb
       .from("reminders")
-      .select("id, text, datetime")
+      .select("id, title, description, datetime")
       .eq("user_id", user.id)
       .order("datetime", { ascending: true });
 
@@ -216,7 +214,8 @@
 
     reminders = data.map(r => ({
       id: r.id,
-      text: r.text,
+      title: r.title,
+      description: r.description,
       time: new Date(r.datetime).getTime()
     }));
 
@@ -227,13 +226,13 @@
     const { data: { user } } = await sb.auth.getUser();
     if (!user) return;
 
-    const payload = {
+    const { error } = await sb.from("reminders").insert({
       user_id: user.id,
-      text: text,
-      datetime: date.toISOString() // ISO para timestamptz
-    };
-
-    const { error } = await sb.from("reminders").insert([payload]); // ⚠️ TEM QUE SER ARRAY
+      title: text,
+      description: text,
+      datetime: date.toISOString(),
+      status: "active"
+    });
 
     if (error) {
       console.error("Erro ao salvar lembrete:", error);
@@ -254,7 +253,7 @@
 
       card.innerHTML = `
         <h3>${date.toLocaleString("pt-BR")}</h3>
-        <p>${rem.text}</p>
+        <p>${rem.title}</p>
       `;
       reminderList.appendChild(card);
     });
@@ -286,7 +285,7 @@
 
       statusEl.textContent = "Você disse: " + text;
 
-      // TESTE: agora + 1 hora
+      // Teste: agora + 1 hora
       const date = new Date();
       date.setHours(date.getHours() + 1);
 
