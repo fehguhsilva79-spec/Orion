@@ -5,10 +5,10 @@
   <title>Eron</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <!-- PWA -->
-  <link rel="manifest" href="manifest.json">
+  <!-- ❌ PWA DESATIVADO POR ENQUANTO (estava dando erro 401 no Vercel) -->
+  <!-- <link rel="manifest" href="manifest.json"> -->
   <meta name="theme-color" content="#f5f2ee">
-  <link rel="apple-touch-icon" href="icon-192.png">
+  <!-- <link rel="apple-touch-icon" href="icon-192.png"> -->
 
   <!-- Estilo -->
   <link rel="stylesheet" href="style.css" />
@@ -111,12 +111,11 @@
     </div>
   </div>
 
-  <!-- ✅ SUPABASE SDK (OBRIGATÓRIO) -->
+  <!-- ✅ SUPABASE SDK (OBRIGATÓRIO - TEM QUE VIR ANTES DO script.js) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-  <!-- Seu script -->
+  <!-- ✅ SEU SCRIPT -->
   <script src="script.js"></script>
 
 </body>
 </html>
-
