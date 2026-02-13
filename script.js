@@ -33,6 +33,7 @@ const sideMenu = $("sideMenu");
 const logoutBtn = $("logoutBtn");
 
 // Botões do menu
+const menuHome = $("menuHome");
 const menuAccount = $("menuAccount");
 const menuPlan = $("menuPlan");
 const menuNotifications = $("menuNotifications");
@@ -203,6 +204,11 @@ logoutBtn.onclick = () => {
 };
 
 // Navegação do menu
+menuHome.onclick = () => {
+  showHome();
+  sideMenu.classList.add("hidden");
+};
+
 menuAccount.onclick = () => {
   showAccount();
   sideMenu.classList.add("hidden");
