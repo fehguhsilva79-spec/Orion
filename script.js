@@ -1,3 +1,9 @@
+// ================== SUPABASE ==================
+const SUPABASE_URL = "https://qftffjgdoicyswgdtpld.supabase.co";
+const SUPABASE_KEY = "sb_publishable_dg5HKUTmMIhd2Glc8hVyaw_NEzRjFRo";
+
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
 // ================== HELPERS ==================
 function $(id) {
   return document.getElementById(id);
@@ -8,7 +14,7 @@ const loginScreen = $("loginScreen");
 const registerScreen = $("registerScreen");
 const appScreen = $("appScreen");
 
-// Telas internas do app
+// Telas internas
 const mainHome = $("mainHome");
 const accountScreen = $("accountScreen");
 const planScreen = $("planScreen");
@@ -44,34 +50,13 @@ const statusEl = $("status");
 const confirmArea = $("confirmArea");
 const reminderList = $("reminderList");
 
-// ================== UTIL AUTH ==================
-function getUsers() {
-  try {
-    const data = localStorage.getItem("eron_users");
-    return data ? JSON.parse(data) : {};
-  } catch {
-    return {};
-  }
-}
-
-function saveUsers(users) {
-  localStorage.setItem("eron_users", JSON.stringify(users));
-}
-
-function setCurrentUser(email) {
-  localStorage.setItem("eron_current_user", email);
-}
-
-function getCurrentUser() {
-  return localStorage.getItem("eron_current_user");
-}
-
-function logout() {
-  localStorage.removeItem("eron_current_user");
+// ================== AUTH ==================
+async function logout() {
+  await supabase.auth.signOut();
   showLoginScreen();
 }
 
-// ================== TROCA DE TELAS PRINCIPAIS ==================
+// ================== TROCA DE TELAS ==================
 function showLoginScreen() {
   loginScreen.classList.remove("hidden");
   registerScreen.classList.add("hidden");
@@ -91,10 +76,10 @@ function showAppScreen() {
   registerScreen.classList.add("hidden");
   appScreen.classList.remove("hidden");
   if (sideMenu) sideMenu.classList.add("hidden");
-  showHome(); // Sempre começa na Home
+  showHome();
 }
 
-// ================== TROCA DE TELAS INTERNAS ==================
+// ================== TELAS INTERNAS ==================
 function hideAllInternal() {
   if (mainHome) mainHome.classList.add("hidden");
   if (accountScreen) accountScreen.classList.add("hidden");
@@ -140,8 +125,8 @@ goToLogin.onclick = (e) => {
   showLoginScreen();
 };
 
-loginBtn.onclick = () => {
-  const email = loginEmail.value.trim().toLowerCase();
+loginBtn.onclick = async () => {
+  const email = loginEmail.value.trim();
   const password = loginPassword.value;
 
   if (!email || !password) {
@@ -149,24 +134,18 @@ loginBtn.onclick = () => {
     return;
   }
 
-  const users = getUsers();
+  const { error } = await supabase.auth.signInWithPassword({ email, password });
 
-  if (!users[email]) {
-    alert("Conta não encontrada. Crie uma conta.");
+  if (error) {
+    alert("Erro ao entrar: " + error.message);
     return;
   }
 
-  if (users[email].password !== password) {
-    alert("Senha incorreta.");
-    return;
-  }
-
-  setCurrentUser(email);
   initApp();
 };
 
-registerBtn.onclick = () => {
-  const email = registerEmail.value.trim().toLowerCase();
+registerBtn.onclick = async () => {
+  const email = registerEmail.value.trim();
   const password = registerPassword.value;
   const confirm = registerPasswordConfirm.value;
 
@@ -180,15 +159,21 @@ registerBtn.onclick = () => {
     return;
   }
 
-  const users = getUsers();
+  const { data, error } = await supabase.auth.signUp({ email, password });
 
-  if (users[email]) {
-    alert("Este email já está cadastrado.");
+  if (error) {
+    alert("Erro ao criar conta: " + error.message);
     return;
   }
 
-  users[email] = { password };
-  saveUsers(users);
+  // Cria perfil
+  if (data.user) {
+    await supabase.from("profiles").insert({
+      id: data.user.id,
+      email: email,
+      is_premium: false
+    });
+  }
 
   alert("Conta criada com sucesso! Faça login.");
   showLoginScreen();
@@ -203,7 +188,6 @@ logoutBtn.onclick = () => {
   logout();
 };
 
-// Navegação do menu
 menuHome.onclick = () => {
   showHome();
   sideMenu.classList.add("hidden");
@@ -224,30 +208,50 @@ menuNotifications.onclick = () => {
   sideMenu.classList.add("hidden");
 };
 
-// ================== DADOS DE LEMBRETES ==================
+// ================== LEMBRETES (SUPABASE) ==================
 let reminders = [];
 
-function loadReminders() {
-  const user = getCurrentUser();
+async function loadReminders() {
+  const { data: { user } } = await supabase.auth.getUser();
   if (!user) return;
 
-  try {
-    const data = localStorage.getItem("eron_reminders_" + user);
-    reminders = data ? JSON.parse(data) : [];
-  } catch {
-    reminders = [];
+  const { data, error } = await supabase
+    .from("reminders")
+    .select("*")
+    .eq("user_id", user.id)
+    .order("datetime", { ascending: true });
+
+  if (error) {
+    console.error(error);
+    return;
   }
+
+  reminders = data.map(r => ({
+    id: r.id,
+    text: r.text,
+    time: new Date(r.datetime).getTime(),
+    notified: false
+  }));
 
   renderList();
 }
 
-function saveAndRender() {
-  const user = getCurrentUser();
+async function addReminder(text, date) {
+  const { data: { user } } = await supabase.auth.getUser();
   if (!user) return;
 
-  reminders.sort((a, b) => a.time - b.time);
-  localStorage.setItem("eron_reminders_" + user, JSON.stringify(reminders));
-  renderList();
+  const { error } = await supabase.from("reminders").insert({
+    user_id: user.id,
+    text: text,
+    datetime: date.toISOString()
+  });
+
+  if (error) {
+    alert("Erro ao salvar lembrete");
+    return;
+  }
+
+  loadReminders();
 }
 
 // ================== NOTIFICAÇÕES ==================
@@ -310,27 +314,15 @@ function parseDateTime(text) {
     date.setDate(date.getDate() + 1);
   }
 
-  let hour = null;
-  let minute = null;
+  let match = t.match(/(\d{1,2})\s*[:h]\s*(\d{2})/);
+  if (!match) return null;
 
-  if (t.includes("meio dia") || t.includes("meiodia")) {
-    hour = 12; minute = 0;
-  } else if (t.includes("meia noite") || t.includes("meianoite")) {
-    hour = 0; minute = 0;
-  } else {
-    const match = t.match(/(\d{1,2})\s*[:h]\s*(\d{2})/);
-    if (match) {
-      hour = parseInt(match[1], 10);
-      minute = parseInt(match[2], 10);
-    }
-  }
-
-  if (hour === null || minute === null) return null;
+  let hour = parseInt(match[1], 10);
+  let minute = parseInt(match[2], 10);
 
   date.setHours(hour, minute, 0, 0);
 
-  const now = new Date();
-  if (!t.includes("amanhã") && !t.includes("depois de amanhã") && date.getTime() < now.getTime()) {
+  if (!t.includes("amanhã") && date.getTime() < Date.now()) {
     date.setDate(date.getDate() + 1);
   }
 
@@ -347,7 +339,7 @@ function handleSpokenText(text) {
   const date = parseDateTime(text);
 
   if (!date) {
-    alert("Diga um horário como: 19:47, 11:09, meio dia, amanhã 14:30...");
+    alert("Diga um horário como: 19:47, 11:09, amanhã 14:30...");
     return;
   }
 
@@ -374,7 +366,7 @@ function showConfirmation(text, date) {
   confirmArea.appendChild(card);
 
   card.querySelector(".btn-confirm").onclick = () => {
-    addReminder(text, date, null);
+    addReminder(text, date);
     confirmArea.classList.add("hidden");
   };
 
@@ -383,20 +375,7 @@ function showConfirmation(text, date) {
   };
 }
 
-// ================== LEMBRETES ==================
-function addReminder(text, date, notifyBeforeMinutes) {
-  const reminder = {
-    id: Date.now(),
-    text,
-    time: date.getTime(),
-    notifyBeforeMinutes,
-    notified: false
-  };
-
-  reminders.push(reminder);
-  saveAndRender();
-}
-
+// ================== LISTA ==================
 function renderList() {
   reminderList.innerHTML = "";
 
@@ -408,50 +387,24 @@ function renderList() {
     card.innerHTML = `
       <h3>${date.toLocaleString("pt-BR")}</h3>
       <p>${rem.text}</p>
-      <div class="actions">
-        <button class="btn-delete">Excluir</button>
-      </div>
     `;
-
-    card.querySelector(".btn-delete").onclick = () => {
-      reminders = reminders.filter(r => r.id !== rem.id);
-      saveAndRender();
-    };
 
     reminderList.appendChild(card);
   });
 }
 
-// ================== CHECK ==================
-function checkReminders() {
-  const now = Date.now();
-
-  reminders.forEach(rem => {
-    let triggerTime = rem.time;
-    if (rem.notifyBeforeMinutes) {
-      triggerTime = rem.time - rem.notifyBeforeMinutes * 60 * 1000;
-    }
-
-    if (!rem.notified && now >= triggerTime) {
-      rem.notified = true;
-      sendNotification("⏰ Eron", rem.text);
-      saveAndRender();
-    }
-  });
-}
-
-setInterval(checkReminders, 1000);
-
 // ================== INIT ==================
-function initApp() {
+async function initApp() {
   showAppScreen();
   loadReminders();
 }
 
 // Boot
-const user = getCurrentUser();
-if (user) {
-  initApp();
-} else {
-  showLoginScreen();
-}
+(async () => {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (user) {
+    initApp();
+  } else {
+    showLoginScreen();
+  }
+})();
